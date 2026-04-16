@@ -1,21 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { equipmentList } from "@/data/mockData";
+import { useData } from "@/context/DataProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Search, Filter, MapPin, Gauge, Activity, ArrowUpRight } from "lucide-react";
+import { Search, Filter, MapPin, Activity, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function ListingPage() {
+  const { equipment } = useData();
   const [activeCategory, setActiveCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const categories = ["All", "Earthmoving", "Lifting", "Concrete", "Materials", "Tools"];
 
-  const filtered = activeCategory === "All" 
-    ? equipmentList 
-    : equipmentList.filter(item => item.category === activeCategory);
+  const filtered = (equipment || []).filter(item => {
+    const matchesCategory = activeCategory === "All" || item.category === activeCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          item.location.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch && item.status === "active";
+  });
 
   return (
     <div className="container mx-auto px-6 max-w-7xl pb-32">
@@ -31,7 +36,9 @@ export default function ListingPage() {
             <input
               type="text"
               placeholder="Search by model or spec..."
-              className="w-full h-14 pl-12 pr-4 rounded-xl bg-surface-container border-none focus:ring-2 focus:ring-primary text-foreground"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-14 pl-12 pr-4 rounded-xl bg-surface-container border-none focus:ring-2 focus:ring-primary text-foreground outline-none"
             />
           </div>
         </div>
@@ -72,51 +79,60 @@ export default function ListingPage() {
 
           {/* Grid */}
           <main className="lg:col-span-9">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {filtered.map((item) => (
-                <Card key={item.id} variant="lowest" className="group border border-transparent hover:border-primary/20 hover:cosmic-shadow">
-                  <div className="aspect-video relative">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute top-4 left-4 glass px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest">
-                      {item.category}
-                    </div>
-                  </div>
-                  <div className="p-8">
-                    <div className="flex justify-between items-start mb-6">
-                      <div>
-                        <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">{item.name}</h3>
-                        <p className="text-secondary text-sm flex items-center gap-1">
-                          <MapPin size={14} /> {item.location}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-black text-foreground">${item.pricePerDay}</div>
-                        <div className="text-[10px] uppercase font-bold text-secondary tracking-widest">Per Day</div>
+            {filtered.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {filtered.map((item) => (
+                  <Card key={item.id} variant="lowest" className="group border border-transparent hover:border-primary/20 hover:cosmic-shadow">
+                    <div className="aspect-video relative overflow-hidden rounded-t-xl">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      <div className="absolute top-4 left-4 glass px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest">
+                        {item.category}
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                      {Object.entries(item.specs).slice(0, 2).map(([key, value]) => (
-                        <div key={key} className="p-3 bg-surface-low rounded-lg">
-                          <div className="text-[10px] uppercase font-bold text-secondary tracing-widest mb-1">{key}</div>
-                          <div className="text-sm font-bold">{value}</div>
+                    <div className="p-8">
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">{item.name}</h3>
+                          <p className="text-secondary text-sm flex items-center gap-1">
+                            <MapPin size={14} /> {item.location}
+                          </p>
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-black text-foreground">${item.pricePerDay}</div>
+                          <div className="text-[10px] uppercase font-bold text-secondary tracking-widest">Per Day</div>
+                        </div>
+                      </div>
 
-                    <Link href={`/equipment/${item.id}`} className="block">
-                      <Button variant="secondary" className="w-full group/btn">
-                        View Full Specs <ArrowUpRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                      </Button>
-                    </Link>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                      <div className="grid grid-cols-2 gap-4 mb-8">
+                        {Object.entries(item.specs).slice(0, 2).map(([key, value]) => (
+                          <div key={key} className="p-3 bg-surface-low rounded-lg">
+                            <div className="text-[10px] uppercase font-bold text-secondary tracking-widest mb-1">{key}</div>
+                            <div className="text-sm font-bold">{value}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Link href={`/equipment/${item.id}`} className="block">
+                        <Button variant="secondary" className="w-full group/btn">
+                          View Full Specs <ArrowUpRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-32 bg-surface-low rounded-[40px] border border-dashed border-surface-container">
+                <Search size={48} className="text-secondary/20 mb-6" />
+                <h3 className="text-xl font-bold mb-2">No machinery found</h3>
+                <p className="text-secondary text-sm">Try adjusting your filters or search terms.</p>
+                <Button variant="tertiary" className="mt-6" onClick={() => {setSearchQuery(""); setActiveCategory("All");}}>Reset All Filters</Button>
+              </div>
+            )}
           </main>
         </div>
       </div>

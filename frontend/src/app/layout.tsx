@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   description: "The premium construction equipment rental platform.",
 };
 
+import { DataProvider } from "@/context/DataProvider";
+import { ToastProvider } from "@/components/ui/Toast";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,11 +22,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-inter antialiased bg-background text-foreground`}>
-        <Navbar />
-        <main className="min-h-screen pt-32">
-          {children}
-        </main>
-        <Footer />
+        <DataProvider>
+          <ToastProvider>
+            <Navbar />
+            <main className="min-h-screen pt-32">
+              {children}
+            </main>
+            <Footer />
+          </ToastProvider>
+        </DataProvider>
       </body>
     </html>
   );

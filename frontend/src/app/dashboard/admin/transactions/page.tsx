@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/Card";
 import { Table, TableRow, TableCell } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
+import { useData } from "@/context/DataProvider";
 import { 
   DollarSign, 
   ArrowUpRight, 
@@ -16,11 +17,10 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function AdminTransactions() {
-  const transactions = [
-    { id: "TX-4521", type: "Booking #821", part: "BuildingCorp → Karim", date: "2026-04-12", amount: 2250, fee: 225, status: "Settled" },
-    { id: "TX-4520", type: "Booking #819", part: "MarocBuild → Atlas", date: "2026-04-11", amount: 1400, fee: 140, status: "Settled" },
-    { id: "TX-4519", type: "Booking #818", part: "SiteTools → Karim", date: "2026-04-10", amount: 850, fee: 85, status: "Processing" },
-  ];
+  const { transactions } = useData();
+
+  const totalVolume = (transactions || []).reduce((acc, tx) => acc + tx.amount, 0);
+  const totalFees = (transactions || []).filter(tx => tx.type === "Platform Fee").reduce((acc, tx) => acc + tx.amount, 0);
 
   return (
     <div className="flex flex-col gap-12">
@@ -39,7 +39,7 @@ export default function AdminTransactions() {
         <Card variant="high" className="p-8 primary-gradient text-white flex flex-col justify-between relative overflow-hidden group">
           <div className="relative z-10">
             <div className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Total Platform Volume (MTD)</div>
-            <div className="text-5xl font-black tracking-tighter text-balance">$284,520.00</div>
+            <div className="text-5xl font-black tracking-tighter text-balance">${totalVolume.toLocaleString()}</div>
           </div>
           <div className="relative z-10 flex justify-between items-end mt-12">
             <div className="text-xs font-medium opacity-80 flex items-center gap-1">
@@ -55,7 +55,7 @@ export default function AdminTransactions() {
         <Card variant="lowest" className="p-8 border border-surface-container flex flex-col justify-between bg-surface-low/30">
           <div>
             <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Fee Revenue (10%)</div>
-            <div className="text-3xl font-black text-primary">$28,452</div>
+            <div className="text-3xl font-black text-primary">${totalFees.toLocaleString()}</div>
           </div>
           <div className="flex items-center gap-2 mt-8 text-[10px] font-bold text-green-600 uppercase tracking-widest">
             <div className="w-1.5 h-1.5 bg-green-600 rounded-full" /> Verified Cleared
@@ -77,19 +77,18 @@ export default function AdminTransactions() {
         </Card>
       </div>
 
-      <Table headers={["TX ID", "Source/Type", "Counterparties", "Execution", "Amount", "Platform Fee", "Status"]}>
-        {transactions.map(tx => (
+      <Table headers={["TX ID", "Source/Type", "Counterparties", "Execution", "Amount", "Status"]}>
+        {(transactions || []).map(tx => (
           <TableRow key={tx.id}>
             <TableCell className="font-mono text-[10px] font-bold text-secondary">{tx.id}</TableCell>
             <TableCell className="font-bold text-sm tracking-tight">{tx.type}</TableCell>
-            <TableCell className="text-secondary text-[10px] font-bold uppercase tracking-widest">{tx.part}</TableCell>
+            <TableCell className="text-secondary text-[10px] font-bold uppercase tracking-widest">{tx.counterparty}</TableCell>
             <TableCell className="text-secondary text-xs">{tx.date}</TableCell>
-            <TableCell className="font-black text-sm text-foreground">${tx.amount}</TableCell>
-            <TableCell className="font-black text-sm text-primary">+${tx.fee}</TableCell>
+            <TableCell className="font-black text-sm text-foreground">${tx.amount.toLocaleString()}</TableCell>
             <TableCell>
               <div className={cn(
                 "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit",
-                tx.status === 'Settled' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                tx.status === 'Cleared' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
               )}>
                 {tx.status}
               </div>

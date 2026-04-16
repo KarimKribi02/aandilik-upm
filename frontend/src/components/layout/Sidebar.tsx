@@ -14,9 +14,11 @@ import {
   DollarSign,
   Settings,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Construction
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useData } from "@/context/DataProvider";
 
 type Role = "client" | "owner" | "admin";
 
@@ -46,13 +48,16 @@ const navItems: Record<Role, { href: string; label: string; icon: any }[]> = {
 
 export const Sidebar = ({ role }: SidebarProps) => {
   const pathname = usePathname();
-  const items = navItems[role];
+  const { logout } = useData();
+  const items = navItems[role] || [];
 
   return (
     <aside className="w-72 h-screen fixed left-0 top-0 border-r border-surface-container bg-surface flex flex-col p-8 z-40">
       <div className="flex items-center gap-3 mb-12">
-        <div className="w-8 h-8 primary-gradient rounded-lg" />
-        <span className="font-bold text-xl tracking-tight">EC <span className="text-secondary font-medium">Control</span></span>
+        <div className="w-8 h-8 primary-gradient rounded-xl flex items-center justify-center text-white">
+          <Construction size={18} />
+        </div>
+        <span className="font-bold text-xl tracking-tight">Aandilik <span className="text-secondary font-medium">Ops</span></span>
       </div>
 
       <nav className="flex-1 flex flex-col gap-2">
@@ -79,9 +84,12 @@ export const Sidebar = ({ role }: SidebarProps) => {
         <Link href="#" className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-secondary hover:bg-surface-low transition-all">
           <Settings size={20} /> Settings
         </Link>
-        <Link href="/" className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-orange-600 hover:bg-orange-50 transition-all">
-          <LogOut size={20} /> Exit to Public
-        </Link>
+        <button 
+          onClick={() => logout()}
+          className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-orange-600 hover:bg-orange-50 transition-all text-left"
+        >
+          <LogOut size={20} /> Exit Dashboard
+        </button>
       </div>
     </aside>
   );

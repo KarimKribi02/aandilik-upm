@@ -2,11 +2,20 @@
 
 import { Table, TableRow, TableCell } from "@/components/ui/Table";
 import { Card } from "@/components/ui/Card";
-import { reservations, equipmentList, users } from "@/data/mockData";
+import { useData } from "@/context/DataProvider";
+import { Reservation } from "@/data/mockData";
 import { History, TrendingUp, AlertCircle, FileSearch } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function AdminReservations() {
+  const { reservations: allReservations, equipment, users } = useData();
+  
+  const stats = [
+    { label: "Active Contracts", value: (allReservations || []).filter((r: Reservation) => r.status === "Confirmed").length.toString(), icon: History },
+    { label: "Pending Requests", value: (allReservations || []).filter((r: Reservation) => r.status === "Pending").length.toString(), icon: TrendingUp },
+    { label: "Disputed", value: "0", icon: AlertCircle },
+  ];
+
   return (
     <div className="flex flex-col gap-12">
       <div className="flex justify-between items-end">
@@ -18,11 +27,7 @@ export default function AdminReservations() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {[
-          { label: "Active Contracts", value: "84", icon: History },
-          { label: "Avg Duration", value: "14 Days", icon: TrendingUp },
-          { label: "Disputed", value: "0", icon: AlertCircle },
-        ].map(stat => (
+        {stats.map(stat => (
           <Card key={stat.label} variant="lowest" className="p-6 border border-surface-container flex items-center gap-4">
             <div className="p-3 bg-surface-low rounded-xl text-primary">
               <stat.icon size={20} />
@@ -36,9 +41,10 @@ export default function AdminReservations() {
       </div>
 
       <Table headers={["Ref ID", "Equipment", "Contract Participants", "Duration", "Status"]}>
-        {reservations.map((res) => {
-          const eq = equipmentList.find(e => e.id === res.equipmentId);
+        {allReservations.map((res: Reservation) => {
+          const eq = equipment.find(e => e.id === res.equipmentId);
           const renter = users.find(u => u.id === res.renterId);
+          const owner = users.find(u => u.id === res.ownerId);
           return (
             <TableRow key={res.id}>
               <TableCell className="font-mono text-[10px] font-bold text-primary">{res.id}</TableCell>
@@ -49,7 +55,7 @@ export default function AdminReservations() {
               <TableCell>
                 <div className="flex flex-col gap-1">
                   <div className="text-xs font-bold text-foreground">Renter: {renter?.name}</div>
-                  <div className="text-[10px] text-secondary font-bold uppercase tracking-widest">Owner: Karim Rentals</div>
+                  <div className="text-[10px] text-secondary font-bold uppercase tracking-widest">Owner: {owner?.name || "System Owner"}</div>
                 </div>
               </TableCell>
               <TableCell>
@@ -57,7 +63,8 @@ export default function AdminReservations() {
               </TableCell>
               <TableCell>
                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                  res.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                  res.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 
+                  res.status === 'Pending' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'
                 }`}>
                   {res.status}
                 </span>

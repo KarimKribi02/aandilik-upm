@@ -1,37 +1,64 @@
 "use client";
 
-import { ReactNode } from "react";
+import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { Button } from "./Button";
 import { cn } from "@/lib/utils";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  children: ReactNode;
-  footer?: ReactNode;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
-export const Modal = ({ isOpen, onClose, title, children, footer }: ModalProps) => {
-  if (!isOpen) return null;
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer }) => {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShow(true);
+      document.body.style.overflow = "hidden";
+    } else {
+      setTimeout(() => setShow(false), 300);
+      document.body.style.overflow = "auto";
+    }
+  }, [isOpen]);
+
+  if (!isOpen && !show) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-background/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-surface w-full max-w-lg rounded-3xl border border-surface-container shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="flex items-center justify-between p-8 border-b border-surface-container bg-surface-low">
-          <h3 className="text-xl font-bold tracking-tight">{title}</h3>
-          <Button variant="tertiary" size="sm" onClick={onClose} className="p-2">
-            <X size={20} />
-          </Button>
+    <div className={cn(
+      "fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300",
+      isOpen ? "opacity-100" : "opacity-0"
+    )}>
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Content */}
+      <div className={cn(
+        "relative w-full max-w-lg bg-white rounded-[40px] border border-surface-container cosmic-shadow overflow-hidden transition-all duration-300 transform",
+        isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
+      )}>
+        <div className="flex items-center justify-between p-8 border-b border-surface-container">
+          <h3 className="text-2xl font-black tracking-tight">{title}</h3>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-surface-low rounded-xl transition-colors text-secondary"
+          >
+            <X size={24} />
+          </button>
         </div>
         
-        <div className="p-8 overflow-y-auto max-h-[70vh]">
+        <div className="p-8">
           {children}
         </div>
 
         {footer && (
-          <div className="p-8 border-t border-surface-container flex justify-end gap-3 bg-surface-low">
+          <div className="p-8 border-t border-surface-container bg-surface-low flex gap-4">
             {footer}
           </div>
         )}

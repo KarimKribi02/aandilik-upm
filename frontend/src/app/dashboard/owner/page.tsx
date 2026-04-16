@@ -1,94 +1,159 @@
 "use client";
 
-import { Card } from "@/components/ui/Card";
+import { useData } from "@/context/DataProvider";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { 
+  Plus, 
+  Settings, 
   BarChart3, 
-  TrendingUp, 
   Clock, 
-  UserCheck,
-  Plus,
-  ArrowUpRight
+  CheckCircle2, 
+  MoreVertical,
+  ArrowUpRight,
+  PackageSearch
 } from "lucide-react";
 import Link from "next/link";
-import { equipmentList } from "@/data/mockData";
+import { useState, useEffect } from "react";
 
 export default function OwnerOverview() {
+  const { equipment, reservations, currentUser } = useData();
+  
+  // Filter for current owner
+  const myEquipment = (equipment || []).filter(e => e.ownerId === currentUser?.id);
+  const myReservations = (reservations || []).filter(res => res.ownerId === currentUser?.id);
+
+  const activeRentals = myReservations.filter(r => r.status === "Confirmed").length;
+  const pendingRequests = myReservations.filter(r => r.status === "Pending").length;
+  const totalRevenue = myReservations
+    .filter(r => r.status === "Confirmed" || r.status === "Completed")
+    .reduce((acc, curr) => acc + curr.totalPrice, 0);
+
   const stats = [
-    { label: "Active Revenue", value: "$12,450", icon: BarChart3, color: "text-green-500", trend: "+12%" },
-    { label: "Fleet Utilization", value: "84%", icon: TrendingUp, color: "text-blue-500", trend: "+5%" },
-    { label: "Awaiting Approval", value: "3", icon: Clock, color: "text-orange-500", trend: "0%" },
+    { label: "Active Rentals", value: activeRentals.toString(), icon: BarChart3, color: "text-blue-500" },
+    { label: "Pending Requests", value: pendingRequests.toString(), icon: Clock, color: "text-orange-500" },
+    { label: "Total Revenue", value: `$${(totalRevenue / 1000).toFixed(1)}k`, icon: CheckCircle2, color: "text-green-500" },
   ];
 
   return (
     <div className="flex flex-col gap-12">
-      {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row justify-between items-end gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-4xl font-black tracking-tight">Bonjour, <span className="text-primary">Karim</span></h1>
-          <p className="text-secondary text-sm">Your industrial fleet is currently operating at high efficiency.</p>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-end gap-8">
+        <div>
+          <h1 className="text-5xl font-bold tracking-tight mb-4">Owner <span className="text-primary">Dashboard</span></h1>
+          <p className="text-secondary">Mission control for your industrial assets.</p>
         </div>
-        <Link href="/dashboard/owner/equipment/create">
-          <Button className="gap-2 shadow-lg hover:cosmic-shadow transition-all">
-            <Plus size={18} /> Add New Asset
+        <div className="flex gap-4">
+          <Button variant="secondary" className="gap-2">
+            <Settings size={18} /> Settings
           </Button>
-        </Link>
+          <Link href="/dashboard/owner/equipment">
+            <Button variant="primary" className="gap-2">
+              <Plus size={18} /> Add Equipment
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {stats.map((stat) => (
-          <Card key={stat.label} variant="lowest" className="p-8 flex items-center justify-between border border-surface-container">
+          <Card key={stat.label} variant="lowest" className="p-8 border border-surface-container flex items-center justify-between">
             <div>
-              <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">{stat.label}</div>
-              <div className="text-3xl font-black mb-2">{stat.value}</div>
-              <div className="text-[10px] font-bold text-green-600 flex items-center gap-1">
-                <ArrowUpRight size={12} /> {stat.trend} from last month
-              </div>
+              <div className="text-secondary text-xs font-bold uppercase tracking-widest mb-2">{stat.label}</div>
+              <div className="text-4xl font-black">{stat.value}</div>
             </div>
             <div className={`p-4 bg-surface-low rounded-2xl ${stat.color}`}>
-              <stat.icon size={28} />
+              <stat.icon size={32} />
             </div>
           </Card>
         ))}
       </div>
 
+      {/* Main Content Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Performance Chart Placeholder */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
-          <h3 className="font-bold text-xl">Revenue Trajectory</h3>
-          <Card variant="low" className="h-80 border-2 border-surface-container bg-surface-low/30 relative flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <BarChart3 size={48} className="text-primary opacity-20" />
-              <p className="text-secondary text-xs uppercase tracking-widest font-bold">Analytics Engine Synchronizing...</p>
-            </div>
-          </Card>
+        {/* Equipment List */}
+        <div className="lg:col-span-8 flex flex-col gap-8">
+          <h3 className="text-2xl font-bold">Your Fleet</h3>
+          <div className="flex flex-col gap-4">
+            {myEquipment.length > 0 ? (
+              myEquipment.slice(0, 3).map((item) => (
+                <Card key={item.id} variant="lowest" className="p-6 border border-surface-container hover:cosmic-shadow transition-all group">
+                  <div className="flex items-center gap-6">
+                    <div className="w-24 h-24 relative rounded-xl overflow-hidden shrink-0">
+                      <img src={item.image} alt={item.name} className="absolute inset-0 w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-bold text-lg mb-1">{item.name}</h4>
+                          <p className="text-secondary text-sm">{item.category} • {item.location.split(',')[0]}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                            item.availability ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                          }`}>
+                            {item.availability ? 'Available' : 'Rented'}
+                          </span>
+                          <Button variant="tertiary" size="sm" className="p-2"><MoreVertical size={18} /></Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 bg-surface-low rounded-[40px] border border-dashed border-surface-container">
+                <PackageSearch size={48} className="text-secondary/20 mb-4" />
+                <p className="text-secondary text-sm">No machinery listed yet.</p>
+              </div>
+            )}
+          </div>
+          <Link href="/dashboard/owner/equipment">
+            <Button variant="secondary" className="w-full">View Entire Fleet</Button>
+          </Link>
         </div>
 
-        {/* Recent Activity */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          <h3 className="font-bold text-xl">Recent Inquiries</h3>
+        {/* Recent Reservations */}
+        <div className="lg:col-span-4 flex flex-col gap-8">
+          <h3 className="text-2xl font-bold">Recent Bookings</h3>
           <div className="flex flex-col gap-4">
-            {[1, 2].map((i) => (
-              <Card key={i} variant="lowest" className="p-6 border border-surface-container">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-surface-low flex items-center justify-center text-primary">
-                    <UserCheck size={20} />
-                  </div>
-                  <span className="text-[10px] font-bold text-secondary uppercase">2h ago</span>
-                </div>
-                <h4 className="font-bold text-sm mb-1">New Request for Cat 320</h4>
-                <p className="text-xs text-secondary leading-relaxed mb-4">BuildingCorp Marrakech requested a 15-day rental.</p>
-                <div className="flex gap-2">
-                  <Button variant="secondary" size="sm" className="flex-1 text-[10px]">Approve</Button>
-                  <Button variant="tertiary" size="sm" className="flex-1 text-[10px]">Details</Button>
-                </div>
-              </Card>
-            ))}
+            {myReservations.length > 0 ? (
+              myReservations.slice(0, 3).map((res) => {
+                const eq = equipment.find(e => e.id === res.equipmentId);
+                return (
+                  <Card key={res.id} variant="low" className="p-6 border border-surface-container">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`text-xs font-bold uppercase tracking-widest ${
+                        res.status === 'Confirmed' ? 'text-green-600' : 'text-orange-600'
+                      }`}>
+                        {res.status}
+                      </div>
+                      <div className="text-secondary text-xs uppercase font-bold">{res.startDate}</div>
+                    </div>
+                    <h4 className="font-bold mb-4">{eq?.name}</h4>
+                    <div className="flex items-center justify-between">
+                      <div className="flex -space-x-2">
+                        <div className="w-8 h-8 rounded-full bg-surface-container border-2 border-white flex items-center justify-center text-[10px] font-bold uppercase">
+                          {res.renterId.charAt(0)}
+                        </div>
+                      </div>
+                      <Link href="/dashboard/owner/reservations">
+                        <Button variant="tertiary" size="sm" className="text-xs h-8 px-2">
+                          Manage <ArrowUpRight size={14} className="ml-1" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </Card>
+                );
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 bg-surface-low rounded-3xl border border-dashed border-surface-container">
+                <Clock size={32} className="text-secondary/20 mb-3" />
+                <p className="text-secondary text-xs">No bookings found.</p>
+              </div>
+            )}
           </div>
-          <Link href="/dashboard/owner/reservations">
-            <Button variant="tertiary" className="w-full text-xs underline">Manage All Requests</Button>
-          </Link>
         </div>
       </div>
     </div>

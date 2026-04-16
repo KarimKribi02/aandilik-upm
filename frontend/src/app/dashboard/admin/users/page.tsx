@@ -3,10 +3,20 @@
 import { Card } from "@/components/ui/Card";
 import { Table, TableRow, TableCell } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
-import { users } from "@/data/mockData";
-import { MoreHorizontal, ShieldOff, ShieldCheck, Mail, Search } from "lucide-react";
+import { useData } from "@/context/DataProvider";
+import { MoreHorizontal, ShieldOff, Mail, Search, UserPlus } from "lucide-react";
+import { useState } from "react";
 
 export default function AdminUsers() {
+  const { users } = useData();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredUsers = (users || []).filter(u => 
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="flex flex-col gap-12">
       <div className="flex flex-col md:flex-row justify-between items-end gap-6">
@@ -14,18 +24,23 @@ export default function AdminUsers() {
           <h1 className="text-4xl font-black tracking-tight">User <span className="text-primary">Control</span></h1>
           <p className="text-secondary text-sm">Manage global account access and platform permissions.</p>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary" size={18} />
-          <input
-            type="text"
-            placeholder="Search by ID or email..."
-            className="w-full h-12 pl-12 pr-4 rounded-xl bg-surface-container border-none focus:ring-2 focus:ring-primary text-sm"
-          />
+        <div className="flex gap-4 w-full md:w-auto">
+          <div className="relative flex-1 md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary" size={18} />
+            <input
+              type="text"
+              placeholder="Search by ID or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-12 pl-12 pr-4 rounded-xl bg-surface-container border-none focus:ring-2 focus:ring-primary text-sm outline-none"
+            />
+          </div>
+          <Button variant="primary" className="gap-2 shrink-0"><UserPlus size={18} /> Invite</Button>
         </div>
       </div>
 
       <Table headers={["User Profile", "System Role", "Joining Date", "Status", "Actions"]}>
-        {users.map((user) => (
+        {filteredUsers.map((user) => (
           <TableRow key={user.id}>
             <TableCell>
               <div className="flex items-center gap-4">
@@ -42,7 +57,8 @@ export default function AdminUsers() {
             </TableCell>
             <TableCell>
               <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                user.role === 'Admin' ? 'bg-purple-100 text-purple-700' : 'bg-surface-container text-secondary'
+                user.role === 'Admin' ? 'bg-purple-100 text-purple-700' : 
+                user.role === 'Owner' ? 'bg-blue-100 text-blue-700' : 'bg-surface-container text-secondary'
               }`}>
                 {user.role}
               </span>

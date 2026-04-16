@@ -1,30 +1,82 @@
 "use client";
 
-import { use, useState } from "react";
-import { equipmentList } from "@/data/mockData";
+import { use, useState, useEffect } from "react";
+import { useData } from "@/context/DataProvider";
+import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Card, GlassContainer } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
 import { 
   ChevronLeft, 
   MapPin, 
-  Calendar, 
+  Calendar as CalendarIcon, 
   ShieldCheck, 
   Wrench, 
   Zap, 
   ArrowRight,
-  Info
+  Info,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 
 export default function DetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const equipment = equipmentList.find((e) => e.id === id);
+  const { equipment: allEquipment, currentUser, addReservation } = useData();
+  const { showToast } = useToast();
+  const router = useRouter();
+  
+  const [equipment, setEquipment] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [startDate, setStartDate] = useState("2026-05-01");
+  const [endDate, setEndDate] = useState("2026-05-05");
+  const [loading, setLoading] = useState(false);
 
-  if (!equipment) {
+  useEffect(() => {
+    const found = allEquipment.find((e) => e.id === id);
+    if (found) {
+      setEquipment(found);
+    }
+  }, [id, allEquipment]);
+
+  if (allEquipment.length > 0 && !equipment) {
     notFound();
   }
+
+  if (!equipment) return <div className="p-32 text-center font-bold text-secondary">Loading structural data...</div>;
+
+  const handleRentClick = () => {
+    if (!currentUser) {
+      router.push("/login");
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmReservation = () => {
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      const days = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+      const totalPrice = days * equipment.pricePerDay;
+
+      addReservation({
+        equipmentId: equipment.id,
+        renterId: currentUser!.id,
+        ownerId: equipment.ownerId,
+        startDate,
+        endDate,
+        totalPrice
+      });
+
+      showToast("Deployment request transmitted.", "success");
+      setLoading(false);
+      setIsModalOpen(false);
+      setIsSuccessModalOpen(true);
+    }, 1500);
+  };
 
   return (
     <div className="container mx-auto px-6 max-w-7xl pb-32">
@@ -70,7 +122,7 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {Object.entries(equipment.specs).map(([key, value]) => (
+              {Object.entries(equipment.specs).map(([key, value]: [string, any]) => (
                 <Card key={key} variant="low" className="p-6">
                   <div className="text-xs font-bold text-secondary uppercase tracking-widest mb-2">{key}</div>
                   <div className="text-lg font-black">{value}</div>
@@ -107,10 +159,24 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between p-5 bg-white/40 rounded-xl border border-white/20">
                 <div className="flex items-center gap-3">
-                  <Calendar size={20} className="text-primary" />
-                  <span className="font-bold text-sm">Date Range</span>
+                  <CalendarIcon size={20} className="text-primary" />
+                  <span className="font-bold text-sm">Deployment Range</span>
                 </div>
-                <span className="text-secondary text-sm font-medium">Select Range</span>
+                <div className="flex flex-col items-end gap-1">
+                  <input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="bg-transparent text-xs font-bold outline-none" 
+                  />
+                  <div className="h-px w-4 bg-tertiary/20" />
+                  <input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="bg-transparent text-xs font-bold outline-none" 
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2 p-4 text-xs font-medium text-secondary bg-surface-container/30 rounded-lg">
                 <Info size={14} className="text-tertiary" />
@@ -119,14 +185,19 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
             </div>
 
             <div className="flex flex-col gap-6">
-              <Button size="lg" className="w-full h-18 text-xl font-black">
-                Rent This Machine <ArrowRight className="ml-2" />
+              <Button 
+                size="lg" 
+                className="w-full h-18 text-xl font-black"
+                onClick={handleRentClick}
+                disabled={!equipment.availability}
+              >
+                {equipment.availability ? "Rent This Machine" : "Currently In Use"} <ArrowRight className="ml-2" />
               </Button>
               <div className="flex flex-col gap-4 pt-4 border-t border-white/20">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-secondary">Availability</span>
+                  <span className="text-secondary">Availability Status</span>
                   <span className={`font-bold ${equipment.availability ? 'text-green-600' : 'text-red-500'}`}>
-                    {equipment.availability ? 'Ready for Deployment' : 'In Use'}
+                    {equipment.availability ? 'Ready for Deployment' : 'Scheduled Task'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
@@ -138,6 +209,76 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
           </GlassContainer>
         </div>
       </div>
+
+      {/* Reservation Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Confirm Reservation"
+        footer={(
+          <>
+            <Button variant="secondary" className="flex-1" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button className="flex-1 font-black" onClick={handleConfirmReservation} loading={loading}>Confirm Deployment</Button>
+          </>
+        )}
+      >
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center gap-4 p-4 bg-surface-low rounded-2xl">
+            <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+              <img src={equipment.image} alt={equipment.name} className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h4 className="font-bold">{equipment.name}</h4>
+              <p className="text-xs text-secondary">${equipment.pricePerDay} / day</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-surface-low rounded-2xl">
+              <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">Start Date</div>
+              <div className="font-black text-sm">{startDate}</div>
+            </div>
+            <div className="p-4 bg-surface-low rounded-2xl">
+              <div className="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">End Date</div>
+              <div className="font-black text-sm">{endDate}</div>
+            </div>
+          </div>
+
+          <div className="p-6 primary-gradient text-white rounded-[24px]">
+            <div className="flex justify-between items-center opacity-80 mb-2">
+              <span className="text-sm font-medium">Estimated Total</span>
+              <span className="text-xs">
+                {Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))} Days
+              </span>
+            </div>
+            <div className="text-3xl font-black">
+              ${Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) * equipment.pricePerDay}
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="Deployment Scheduled"
+        footer={(
+          <Button className="w-full font-black" onClick={() => router.push("/dashboard/client/reservations")}>
+            View My Reservations <ArrowRight className="ml-2" />
+          </Button>
+        )}
+      >
+        <div className="flex flex-col items-center text-center gap-6 py-4">
+          <div className="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center">
+            <CheckCircle2 size={64} />
+          </div>
+          <div>
+            <h4 className="text-xl font-bold mb-2">Request Sent Successfully!</h4>
+            <p className="text-secondary text-sm">The owner will review your deployment request shortly. You can track the status in your dashboard.</p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

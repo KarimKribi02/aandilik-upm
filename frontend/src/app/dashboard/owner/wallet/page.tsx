@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Table, TableRow, TableCell } from "@/components/ui/Table";
+import { useData } from "@/context/DataProvider";
 import { 
   Wallet, 
   ArrowUpRight, 
@@ -15,11 +16,11 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function OwnerWallet() {
-  const transactions = [
-    { id: "T1", type: "Rental Income", asset: "Cat 320", date: "2026-04-12", amount: 2250, status: "Cleared" },
-    { id: "T2", type: "Platform Fee", asset: "Global", date: "2026-04-12", amount: -225, status: "Cleared" },
-    { id: "T3", type: "Rental Income", asset: "JCB 3CX", date: "2026-04-10", amount: 1400, status: "Pending" },
-  ];
+  const { transactions, currentUser } = useData();
+
+  // Filter transactions for the current owner
+  const userTransactions = (transactions || []).filter(tx => tx.userId === currentUser?.id);
+  const balance = currentUser?.walletBalance || 0;
 
   return (
     <div className="flex flex-col gap-12">
@@ -38,7 +39,7 @@ export default function OwnerWallet() {
         <Card variant="high" className="p-8 primary-gradient text-white flex flex-col justify-between relative overflow-hidden group">
           <div className="relative z-10">
             <div className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Available Balance</div>
-            <div className="text-5xl font-black tracking-tighter">$14,820.00</div>
+            <div className="text-5xl font-black tracking-tighter">${balance.toLocaleString()}</div>
           </div>
           <div className="relative z-10 flex justify-between items-end mt-12">
             <div className="text-xs font-medium opacity-80 flex items-center gap-1">
@@ -76,29 +77,37 @@ export default function OwnerWallet() {
 
       <div className="flex flex-col gap-8">
         <h3 className="font-bold text-xl">Transaction Ledger</h3>
-        <Table headers={["Reference", "Type", "Asset Cluster", "Execution Date", "Amount", "Status"]}>
-          {transactions.map(t => (
-            <TableRow key={t.id}>
-              <TableCell className="font-mono text-[11px] font-bold">{t.id}</TableCell>
-              <TableCell className="font-bold text-sm">{t.type}</TableCell>
-              <TableCell className="text-secondary text-xs">{t.asset}</TableCell>
-              <TableCell className="text-secondary text-xs">{t.date}</TableCell>
-              <TableCell>
-                <div className={cn("font-black text-sm flex items-center gap-1", t.amount > 0 ? "text-green-600" : "text-red-500")}>
-                  {t.amount > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                  ${Math.abs(t.amount)}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className={cn(
-                  "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center justify-center w-fit",
-                  t.status === 'Cleared' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                )}>
-                  {t.status}
-                </div>
+        <Table headers={["Reference", "Type", "Counterparty", "Execution Date", "Amount", "Status"]}>
+          {userTransactions.length > 0 ? (
+            userTransactions.map(t => (
+              <TableRow key={t.id}>
+                <TableCell className="font-mono text-[11px] font-bold">{t.id}</TableCell>
+                <TableCell className="font-bold text-sm">{t.type}</TableCell>
+                <TableCell className="text-secondary text-xs">{t.counterparty}</TableCell>
+                <TableCell className="text-secondary text-xs">{t.date}</TableCell>
+                <TableCell>
+                  <div className={cn("font-black text-sm flex items-center gap-1", t.amount > 0 ? "text-green-600" : "text-red-500")}>
+                    {t.amount > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                    ${Math.abs(t.amount).toLocaleString()}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center justify-center w-fit",
+                    t.status === 'Cleared' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                  )}>
+                    {t.status}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-12 text-secondary italic">
+                No financial movements detected in the current cycle.
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </Table>
       </div>
     </div>
