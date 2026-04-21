@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Materiel } from './entities/materiel.entity';
 import { User } from '../users/entities/user.entity';
+import { CreateMaterielDto } from './dto/create-materiel.dto';
 
 @Injectable()
 export class MaterielService {
@@ -11,10 +12,10 @@ export class MaterielService {
     private materielRepository: Repository<Materiel>,
   ) {}
 
-  async create(materielData: Partial<Materiel>, owner: User): Promise<Materiel> {
+  async create(materielData: CreateMaterielDto, owner: any): Promise<Materiel> {
     const materiel = this.materielRepository.create({
       ...materielData,
-      proprietaire: owner,
+      proprietaire: { id: owner.userId || owner.id },
     });
     return this.materielRepository.save(materiel);
   }
@@ -39,8 +40,14 @@ export class MaterielService {
     if (materiel.proprietaire.id !== ownerId) {
       throw new UnauthorizedException('You do not own this equipment');
     }
-    Object.assign(materiel, materielData);
-    return this.materielRepository.save(materiel);
+    
+    // Check if the data object is not empty before calling update
+    if (materielData && Object.keys(materielData).length > 0) {
+      await this.materielRepository.update(id, materielData);
+      return this.findOne(id);
+    }
+    
+    return materiel;
   }
 
   async remove(id: number, ownerId: number): Promise<void> {

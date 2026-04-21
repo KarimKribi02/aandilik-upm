@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
 import { Materiel } from '../materiel/entities/materiel.entity';
+import { CreateReservationDto } from './dto/create-reservation.dto';
 
 @Injectable()
 export class ReservationsService {
@@ -15,7 +16,11 @@ export class ReservationsService {
     private materielRepository: Repository<Materiel>,
   ) {}
 
-  async create(reservationData: Partial<Reservation>, materielId: number): Promise<Reservation> {
+  async create(reservationData: CreateReservationDto, materielId: number): Promise<Reservation> {
+    if (!reservationData) {
+      throw new BadRequestException('Reservation data is required');
+    }
+
     const materiel = await this.materielRepository.findOne({ where: { id: materielId } });
     if (!materiel) {
       throw new NotFoundException(`Materiel with ID ${materielId} not found`);

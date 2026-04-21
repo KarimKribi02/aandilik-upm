@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, SetMetadata } from '@nestjs/common';
 import { MaterielService } from './materiel.service';
 import { Materiel } from './entities/materiel.entity';
+import { CreateMaterielDto } from './dto/create-materiel.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/entities/user.entity';
@@ -12,7 +13,8 @@ export class MaterielController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', [UserRole.PROPRIETAIRE, UserRole.ADMINISTRATEUR])
-  create(@Body() materielData: Partial<Materiel>, @Request() req) {
+  create(@Body() body: any, @Request() req) {
+    const materielData = body.materiel || body;
     return this.materielService.create(materielData, req.user);
   }
 
@@ -29,7 +31,8 @@ export class MaterielController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', [UserRole.PROPRIETAIRE, UserRole.ADMINISTRATEUR])
-  update(@Param('id') id: string, @Body() materielData: Partial<Materiel>, @Request() req) {
+  update(@Param('id') id: string, @Body() body: any, @Request() req) {
+    const materielData = body.materiel || body;
     return this.materielService.update(+id, materielData, req.user.userId);
   }
 
