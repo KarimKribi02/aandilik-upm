@@ -1,9 +1,12 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Button } from "@/components/ui/Button";
 import { Bell, Search, User } from "lucide-react";
+
+import { useEffect } from "react";
+import { useData } from "@/context/DataProvider";
 
 export default function DashboardLayout({
   children,
@@ -11,17 +14,34 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { currentUser } = useData();
   
-  // Determine role based on URL for demo purposes
-  const role = pathname.includes("/admin") 
-    ? "admin" 
-    : pathname.includes("/owner") 
-      ? "owner" 
-      : "client";
+  // Determine role based on URL (only admin and owner)
+  const requiredRole = pathname.includes("/admin") ? "admin" : "owner";
+      
+  useEffect(() => {
+    // If no token exists at all natively in local storage, boot immediately
+    if (!localStorage.getItem("aandilik_token")) {
+      router.push("/"); // Replace with "/login" if a login page exists
+      return;
+    }
+
+    // Checking precise role matching when currentUser data is hydrated
+    if (currentUser) {
+      const userRole = currentUser.role.toLowerCase();
+      if (requiredRole === "admin" && userRole !== "admin") {
+        router.push(userRole === "owner" ? "/dashboard/owner" : "/");
+      }
+      if (requiredRole === "owner" && userRole !== "owner" && userRole !== "admin") {
+        router.push("/");
+      }
+    }
+  }, [pathname, currentUser, requiredRole, router]);
 
   return (
     <div className="flex min-h-screen bg-surface">
-      <Sidebar role={role as any} />
+      <Sidebar role={requiredRole as any} />
       
       <main className="flex-1 ml-72">
         {/* Dashboard Header */}
@@ -43,11 +63,15 @@ export default function DashboardLayout({
             <div className="w-px h-6 bg-surface-container mx-2" />
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <div className="text-xs font-bold capitalize">{role} Account</div>
-                <div className="text-[10px] text-secondary font-medium uppercase tracking-widest">Active Member</div>
+                <div className="text-xs font-bold capitalize">{currentUser?.name || "Authenticating..."}</div>
+                <div className="text-[10px] text-secondary font-medium uppercase tracking-widest">{currentUser?.role || requiredRole}</div>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary font-bold">
-                <User size={20} />
+              <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary font-bold overflow-hidden">
+                {currentUser?.avatar ? (
+                  <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User size={20} />
+                )}
               </div>
             </div>
           </div>

@@ -1,7 +1,16 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Construction, Globe, Link2, Mail, MapPin, Phone } from "lucide-react";
 
 export const Footer = () => {
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <footer className="bg-white pt-32 pb-12">
       <div className="container mx-auto px-6 max-w-7xl">

@@ -11,17 +11,16 @@ export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
   @Post()
-  create(@Body() body: any) {
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', [UserRole.PROPRIETAIRE, UserRole.ADMINISTRATEUR])
+  create(@Body() body: any, @Request() req) {
     const reservationData = body.reservation || {
-      client_nom: body.client_nom,
-      client_telephone: body.client_telephone,
-      client_email: body.client_email,
-      date_debut: body.date_debut,
-      date_fin: body.date_fin,
+      date_debut: body.date_debut || body.startDate,
+      date_fin: body.date_fin || body.endDate,
       statut: body.statut,
     };
-    const materielId = body.materielId;
-    return this.reservationsService.create(reservationData, materielId);
+    const materielId = body.materielId || body.equipmentId;
+    return this.reservationsService.create(reservationData, materielId, req.user);
   }
 
   @Patch(':id')
@@ -40,6 +39,12 @@ export class ReservationsController {
   @SetMetadata('roles', [UserRole.ADMINISTRATEUR])
   getStats() {
     return this.reservationsService.getGlobalStats();
+  }
+
+  @Get('owner')
+  @UseGuards(JwtAuthGuard)
+  findMyReservations(@Request() req) {
+    return this.reservationsService.findByOwner(req.user.userId);
   }
 
   @Get()

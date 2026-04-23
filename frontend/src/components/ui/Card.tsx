@@ -19,7 +19,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-xl overflow-hidden transition-all duration-300",
+          "rounded-[2rem] overflow-hidden transition-all duration-500",
           variants[variant],
           className
         )}
@@ -36,7 +36,7 @@ export const GlassContainer = React.forwardRef<HTMLDivElement, React.HTMLAttribu
       <div
         ref={ref}
         className={cn(
-          "glass rounded-xl border border-white/20 p-6",
+          "glass rounded-[2.5rem] border border-white/10 p-8",
           className
         )}
         {...props}

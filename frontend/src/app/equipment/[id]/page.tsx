@@ -356,7 +356,7 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
         onClose={() => setIsSuccessModalOpen(false)}
         title="Déploiement Planifié"
         footer={(
-          <Button className="w-full h-16 rounded-2xl font-black uppercase tracking-widest text-[10px]" onClick={() => router.push("/dashboard/client/reservations")}>
+          <Button className="w-full h-16 rounded-2xl font-black uppercase tracking-widest text-[10px]" onClick={() => router.push("/dashboard/owner/reservations")}>
             Voir mes réservations <ArrowRight className="ml-2" size={16} />
           </Button>
         )}

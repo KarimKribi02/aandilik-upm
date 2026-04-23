@@ -23,6 +23,12 @@ export class MaterielController {
     return this.materielService.findAll();
   }
 
+  @Get('owner')
+  @UseGuards(JwtAuthGuard)
+  findMyEquipment(@Request() req) {
+    return this.materielService.findByOwner(req.user.userId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.materielService.findOne(+id);

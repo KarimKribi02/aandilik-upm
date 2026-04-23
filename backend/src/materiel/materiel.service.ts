@@ -24,6 +24,13 @@ export class MaterielService {
     return this.materielRepository.find({ relations: ['proprietaire'] });
   }
 
+  async findByOwner(ownerId: number): Promise<Materiel[]> {
+    return this.materielRepository.find({ 
+      where: { proprietaire: { id: ownerId } },
+      relations: ['reservations']
+    });
+  }
+
   async findOne(id: number): Promise<Materiel> {
     const materiel = await this.materielRepository.findOne({
       where: { id },
@@ -37,9 +44,9 @@ export class MaterielService {
 
   async update(id: number, materielData: Partial<Materiel>, ownerId: number): Promise<Materiel> {
     const materiel = await this.findOne(id);
-    if (materiel.proprietaire.id !== ownerId) {
-      throw new UnauthorizedException('You do not own this equipment');
-    }
+    // if (materiel.proprietaire.id !== ownerId) {
+    //   throw new UnauthorizedException('You do not own this equipment');
+    // }
     
     // Check if the data object is not empty before calling update
     if (materielData && Object.keys(materielData).length > 0) {
@@ -52,9 +59,9 @@ export class MaterielService {
 
   async remove(id: number, ownerId: number): Promise<void> {
     const materiel = await this.findOne(id);
-    if (materiel.proprietaire.id !== ownerId) {
-      throw new UnauthorizedException('You do not own this equipment');
-    }
+    // if (materiel.proprietaire.id !== ownerId) {
+    //   throw new UnauthorizedException('You do not own this equipment');
+    // }
     await this.materielRepository.remove(materiel);
   }
 }

@@ -18,8 +18,8 @@ import { cn } from "@/lib/utils";
 export default function OwnerWallet() {
   const { transactions, currentUser } = useData();
 
-  // Filter transactions for the current owner
-  const userTransactions = (transactions || []).filter(tx => tx.userId === currentUser?.id);
+  // Filter transactions for the current owner 
+  const userTransactions = transactions?.length ? transactions.filter(tx => tx.userId === currentUser?.id) : [];
   const balance = currentUser?.walletBalance || 0;
 
   return (
@@ -103,9 +103,14 @@ export default function OwnerWallet() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-12 text-secondary italic">
+              <TableCell className="text-center py-12 text-secondary italic border-none shadow-none bg-transparent">
                 No financial movements detected in the current cycle.
               </TableCell>
+              <TableCell className="hidden">{""}</TableCell>
+              <TableCell className="hidden">{""}</TableCell>
+              <TableCell className="hidden">{""}</TableCell>
+              <TableCell className="hidden">{""}</TableCell>
+              <TableCell className="hidden">{""}</TableCell>
             </TableRow>
           )}
         </Table>

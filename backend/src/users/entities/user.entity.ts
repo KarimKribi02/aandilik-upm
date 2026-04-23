@@ -12,6 +12,12 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ nullable: true })
+  nom: string;
+
+  @Column('float', { default: 0 })
+  solde_portefeuille: number;
+
   @Column({ unique: true })
   email: string;
 

@@ -26,4 +26,8 @@ export class UsersService {
   async findOne(id: number): Promise<User | null> {
     return this.usersRepository.findOne({ where: { id } });
   }
+
+  async delete(id: number): Promise<void> {
+    await this.usersRepository.delete(id);
+  }
 }

@@ -13,6 +13,9 @@ export default function OwnerEquipment() {
   const { equipment, currentUser, addEquipment, updateEquipment, deleteEquipment } = useData();
   const { showToast } = useToast();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   // Form State
@@ -28,9 +31,14 @@ export default function OwnerEquipment() {
   // Filter equipment for the current owner
   const myEquipment = (equipment || []).filter(item => item.ownerId === currentUser?.id);
 
-  const handleAddEquipment = (e: React.FormEvent) => {
+  const handleAddEquipment = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!currentUser) {
+      showToast("Session expired or unauthenticated. Please log in again.", "error");
+      return;
+    }
+
     // Validation
     if (!formData.name || !formData.pricePerDay || !formData.location || !formData.description) {
       showToast("Identification error: All technical fields are mandatory.", "error");
@@ -44,11 +52,11 @@ export default function OwnerEquipment() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      addEquipment({
+    try {
+      await addEquipment({
         ...formData,
         pricePerDay: Number(formData.pricePerDay),
-        ownerId: currentUser!.id,
+        ownerId: currentUser.id,
         availability: true,
         status: "pending", 
         specs: {
@@ -59,7 +67,6 @@ export default function OwnerEquipment() {
       } as any);
       
       showToast("Technical draft submitted for review.", "success");
-      setLoading(false);
       setIsAddModalOpen(false);
       setFormData({
         name: "",
@@ -69,7 +76,57 @@ export default function OwnerEquipment() {
         description: "",
         image: "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800"
       });
-    }, 1000);
+    } catch (err: any) {
+      showToast(`Operation failed: ${err.message || 'Could not synchronize with server.'}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEditModal = (item: any) => {
+    setSelectedEquipment(item);
+    setFormData({
+      name: item.name,
+      category: item.category,
+      pricePerDay: item.pricePerDay.toString(),
+      location: item.location,
+      description: item.description,
+      image: item.image
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const openViewModal = (item: any) => {
+    setSelectedEquipment(item);
+    setIsViewModalOpen(true);
+  };
+
+  const handleUpdateEquipment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEquipment) return;
+    
+    if (!formData.name || !formData.pricePerDay || !formData.location || !formData.description) {
+      showToast("Identification error: All technical fields are mandatory.", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await updateEquipment(selectedEquipment.id, {
+        name: formData.name,
+        category: formData.category as any,
+        pricePerDay: Number(formData.pricePerDay),
+        location: formData.location,
+        description: formData.description,
+        image: formData.image
+      });
+      showToast("Asset information updated.", "success");
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      showToast(`Update failed: ${err.message}`, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -128,9 +185,9 @@ export default function OwnerEquipment() {
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button variant="tertiary" size="sm" className="p-2"><Edit3 size={18} /></Button>
+                  <Button variant="tertiary" size="sm" className="p-2" onClick={() => openEditModal(item)}><Edit3 size={18} /></Button>
                   <Button variant="tertiary" size="sm" className="p-2 text-red-500 hover:bg-red-50" onClick={() => handleDelete(item.id)}><Trash2 size={18} /></Button>
-                  <Button variant="tertiary" size="sm" className="p-2"><Eye size={18} /></Button>
+                  <Button variant="tertiary" size="sm" className="p-2" onClick={() => openViewModal(item)}><Eye size={18} /></Button>
                 </div>
               </TableCell>
             </TableRow>
@@ -205,6 +262,100 @@ export default function OwnerEquipment() {
             ></textarea>
           </div>
         </form>
+      </Modal>
+
+      {/* Edit Equipment Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Equipment"
+        footer={(
+          <>
+            <Button variant="secondary" className="flex-1" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+            <Button className="flex-1 font-black" onClick={handleUpdateEquipment} loading={loading}>Save Changes</Button>
+          </>
+        )}
+      >
+        <form className="flex flex-col gap-5">
+          <Input 
+            label="Equipment Name" 
+            value={formData.name}
+            onChange={(e: any) => setFormData({...formData, name: e.target.value})}
+            required 
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Select 
+              label="Category" 
+              options={[
+                { value: "Earthmoving", label: "Earthmoving" },
+                { value: "Lifting", label: "Lifting" },
+                { value: "Concrete", label: "Concrete" },
+                { value: "Materials", label: "Materials" },
+                { value: "Tools", label: "Tools" }
+              ]} 
+              value={formData.category}
+              onChange={(e: any) => setFormData({...formData, category: e.target.value})}
+            />
+            <Input 
+              label="Daily Rate ($)" 
+              type="number" 
+              value={formData.pricePerDay}
+              onChange={(e: any) => setFormData({...formData, pricePerDay: e.target.value})}
+              required 
+            />
+          </div>
+          <Input 
+            label="Location" 
+            value={formData.location}
+            onChange={(e: any) => setFormData({...formData, location: e.target.value})}
+            required 
+          />
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-2 block ml-1">Asset Description</label>
+            <textarea 
+              className="w-full h-32 px-4 py-3 rounded-xl bg-surface-low border-none focus:ring-2 focus:ring-primary text-sm transition-all outline-none resize-none"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              required
+            ></textarea>
+          </div>
+        </form>
+      </Modal>
+
+      {/* View Equipment Modal */}
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title="Asset Details"
+        footer={(
+          <Button className="w-full" onClick={() => setIsViewModalOpen(false)}>Close</Button>
+        )}
+      >
+        {selectedEquipment && (
+          <div className="flex flex-col gap-6">
+            <div className="h-48 rounded-2xl overflow-hidden relative">
+              <img src={selectedEquipment.image} alt={selectedEquipment.name} className="absolute inset-0 w-full h-full object-cover" />
+            </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-bold">{selectedEquipment.name}</h3>
+                <p className="text-secondary text-sm">{selectedEquipment.category}</p>
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-black text-primary">${selectedEquipment.pricePerDay}</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-secondary">per day</div>
+              </div>
+            </div>
+            <div className="p-4 rounded-xl bg-surface-low border border-surface-container">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-1">Location</div>
+              <div className="text-sm font-medium">{selectedEquipment.location}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-2">Description</div>
+              <p className="text-sm leading-relaxed text-secondary">{selectedEquipment.description}</p>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

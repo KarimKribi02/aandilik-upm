@@ -20,17 +20,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useData } from "@/context/DataProvider";
 
-type Role = "client" | "owner" | "admin";
+type Role = "owner" | "admin";
 
 interface SidebarProps {
   role: Role;
 }
 
 const navItems: Record<Role, { href: string; label: string; icon: any }[]> = {
-  client: [
-    { href: "/dashboard/client", label: "Overview", icon: LayoutDashboard },
-    { href: "/dashboard/client/reservations", label: "My Reservations", icon: CalendarRange },
-  ],
   owner: [
     { href: "/dashboard/owner", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/owner/equipment", label: "My Fleet", icon: Hammer },
@@ -49,7 +45,7 @@ const navItems: Record<Role, { href: string; label: string; icon: any }[]> = {
 export const Sidebar = ({ role }: SidebarProps) => {
   const pathname = usePathname();
   const { logout } = useData();
-  const items = navItems[role] || [];
+  const items = navItems[role] || navItems.owner;
 
   return (
     <aside className="w-72 h-screen fixed left-0 top-0 border-r border-surface-container bg-surface flex flex-col p-8 z-40">

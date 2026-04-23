@@ -11,6 +11,7 @@ import {
   reservations as initialReservations,
   transactions as initialTransactions
 } from "@/data/mockData";
+import { apiFetch } from "@/lib/api";
 
 interface DataContextType {
   equipment: Equipment[];
@@ -18,17 +19,80 @@ interface DataContextType {
   reservations: Reservation[];
   transactions: Transaction[];
   currentUser: User | null;
-  addEquipment: (item: Omit<Equipment, "id">) => void;
-  updateEquipment: (id: string, item: Partial<Equipment>) => void;
-  deleteEquipment: (id: string) => void;
-  addReservation: (reservation: Omit<Reservation, "id" | "createdAt" | "status">) => void;
-  updateReservationStatus: (id: string, status: Reservation["status"]) => void;
-  login: (email: string) => boolean;
-  register: (name: string, email: string, role: string) => void;
+  addEquipment: (item: Omit<Equipment, "id">) => Promise<void>;
+  updateEquipment: (id: string, item: Partial<Equipment>) => Promise<void>;
+  deleteEquipment: (id: string) => Promise<void>;
+  addReservation: (reservation: Omit<Reservation, "id" | "createdAt" | "status">) => Promise<void>;
+  updateReservationStatus: (id: string, status: Reservation["status"]) => Promise<void>;
+  createUser: (name: string, email: string, password: string, role?: string) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
+  login: (email: string, password?: string) => Promise<boolean>;
+  register: (name: string, email: string, role: string, password?: string) => Promise<void>;
   logout: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
+
+// Mappings Backend (French) <-> Frontend (English)
+const mapRole = (role: string): any => {
+  if (!role) return role;
+  const normalized = role.toLowerCase();
+  
+  // From backend to frontend
+  if (normalized === 'administrateur') return 'Admin';
+  if (normalized === 'propriétaire' || normalized === 'proprietaire' || normalized === 'owner') return 'Owner';
+  if (normalized === 'client' || normalized === 'locataire') return 'Owner'; // fallback to Owner
+
+  return role;
+};
+
+const mapRoleForBackend = (role: string): string => {
+  if (!role) return 'propriétaire';
+  const normalized = role.toLowerCase();
+  if (normalized === 'admin') return 'administrateur';
+  if (normalized === 'owner') return 'propriétaire';
+  return 'propriétaire';
+}
+
+const mapStatus = (status: string): any => {
+  if (!status) return 'Pending';
+  const normalized = status.toLowerCase();
+  if (normalized === 'en attente') return 'Pending';
+  if (normalized === 'confirmée' || normalized === 'en cours') return 'Confirmed';
+  if (normalized === 'terminée') return 'Completed';
+  if (normalized === 'annulée') return 'Cancelled';
+  if (normalized === 'pending') return 'en attente';
+  if (normalized === 'confirmed') return 'confirmée';
+  if (normalized === 'completed') return 'terminée';
+  if (normalized === 'cancelled') return 'annulée';
+  return 'Pending';
+};
+
+const transformEquipment = (item: any): Equipment => ({
+  id: item.id.toString(),
+  ownerId: item.proprietaire?.id?.toString() || "",
+  name: item.nom_equipement,
+  category: item.categorie as any,
+  pricePerDay: item.prix_location,
+  location: item.localisation,
+  availability: true, // Typically calculated or fetched
+  image: item.images || "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800",
+  description: item.description,
+  specs: {},
+  status: "active"
+});
+
+const transformReservation = (item: any): Reservation => ({
+  id: item.id.toString(),
+  equipmentId: item.materiel?.id?.toString() || "",
+  renterId: item.client?.id?.toString() || item.client_email || "", 
+  ownerId: item.materiel?.proprietaire?.id?.toString() || "",
+  startDate: new Date(item.date_debut).toISOString().split('T')[0],
+  endDate: new Date(item.date_fin).toISOString().split('T')[0],
+  status: mapStatus(item.statut),
+  totalPrice: item.prix_total,
+  createdAt: new Date().toISOString() // Backend lacks createdAt currently
+});
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -38,135 +102,253 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load data from localStorage or use defaults
+  // Initial Data Fetch
   useEffect(() => {
-    const savedEquipment = localStorage.getItem("aandilik_equipment");
-    const savedUsers = localStorage.getItem("aandilik_users");
-    const savedReservations = localStorage.getItem("aandilik_reservations");
-    const savedTransactions = localStorage.getItem("aandilik_transactions");
-    const savedUser = localStorage.getItem("aandilik_current_user");
+    const initApp = async () => {
+      const token = localStorage.getItem("aandilik_token");
+      if (token) {
+        try {
+          const userData = await apiFetch("/users/me");
+          const user: User = {
+            id: userData.id.toString(),
+            name: userData.nom,
+            email: userData.email,
+            role: mapRole(userData.role),
+            walletBalance: userData.solde_portefeuille || 0
+          };
+          setCurrentUser(user);
 
-    setEquipment(savedEquipment ? JSON.parse(savedEquipment) : initialEquipment);
-    setUsers(savedUsers ? JSON.parse(savedUsers) : initialUsers);
-    setReservations(savedReservations ? JSON.parse(savedReservations) : initialReservations);
-    setTransactions(savedTransactions ? JSON.parse(savedTransactions) : initialTransactions);
-    setCurrentUser(savedUser ? JSON.parse(savedUser) : null);
-    setIsLoaded(true);
+          if (user.role === 'Owner') {
+            const ownedEquipment = await apiFetch("/materiel/owner");
+            setEquipment(ownedEquipment.map(transformEquipment));
+            const ownedReservations = await apiFetch("/reservations/owner");
+            setReservations(ownedReservations.map(transformReservation));
+          } else if (user.role === 'Admin') {
+            const allEquipment = await apiFetch("/materiel");
+            setEquipment(allEquipment.map(transformEquipment));
+            const allReservations = await apiFetch("/reservations");
+            setReservations(allReservations.map(transformReservation));
+            const allUsers = await apiFetch("/users");
+            setUsers(allUsers.map((u: any) => ({
+              id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role), walletBalance: u.solde_portefeuille || 0
+            })));
+          }
+        } catch (err) {
+          console.error("Failed to restore session", err);
+          localStorage.removeItem("aandilik_token");
+          setEquipment([]);
+          setUsers([]);
+          setReservations([]);
+          setTransactions([]);
+          setCurrentUser(null);
+        }
+      } else {
+        setEquipment([]);
+        setUsers([]);
+        setReservations([]);
+        setTransactions([]);
+        setCurrentUser(null);
+      }
+      setIsLoaded(true);
+    };
+
+    initApp();
   }, []);
 
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("aandilik_equipment", JSON.stringify(equipment));
-      localStorage.setItem("aandilik_users", JSON.stringify(users));
-      localStorage.setItem("aandilik_reservations", JSON.stringify(reservations));
-      localStorage.setItem("aandilik_transactions", JSON.stringify(transactions));
-    }
-  }, [equipment, users, reservations, transactions, isLoaded]);
+  const login = async (email: string, password: string = "password123") => {
+    try {
+      const data = await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password })
+      });
 
-  const login = (email: string) => {
-    const user = users.find(u => u.email === email);
-    if (user) {
+      localStorage.setItem("aandilik_token", data.access_token);
+      
+      const userData = await apiFetch("/users/me");
+      const user = {
+        id: userData.id.toString(),
+        name: userData.nom,
+        email: userData.email,
+        role: mapRole(userData.role),
+        walletBalance: userData.solde_portefeuille || 0
+      };
+
       setCurrentUser(user);
-      localStorage.setItem("aandilik_current_user", JSON.stringify(user));
+      
+      if (user.role === 'Owner') {
+        const ownedEquipment = await apiFetch("/materiel/owner");
+        setEquipment(ownedEquipment.map(transformEquipment));
+        const ownedReservations = await apiFetch("/reservations/owner");
+        setReservations(ownedReservations.map(transformReservation));
+      } else if (user.role === 'Admin') {
+        const allEquipment = await apiFetch("/materiel");
+        setEquipment(allEquipment.map(transformEquipment));
+        const allReservations = await apiFetch("/reservations");
+        setReservations(allReservations.map(transformReservation));
+        const allUsers = await apiFetch("/users");
+        setUsers(allUsers.map((u: any) => ({
+          id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role), walletBalance: u.solde_portefeuille || 0
+        })));
+      }
+
       return true;
+    } catch (err) {
+      console.error("Login failed", err);
+      return false;
     }
-    return false;
   };
 
-  const register = (name: string, email: string, role: any) => {
-    const newUser: User = {
-      id: "u_" + Math.random().toString(36).substr(2, 9),
-      name,
-      email,
-      role,
-      walletBalance: 0
-    };
-    setUsers(prev => [...prev, newUser]);
-    setCurrentUser(newUser);
-    localStorage.setItem("aandilik_current_user", JSON.stringify(newUser));
+  const register = async (name: string, email: string, role: string, password: string = "password123") => {
+    try {
+      await apiFetch("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          nom: name,
+          email,
+          password: password,
+          role: mapRoleForBackend(role)
+        })
+      });
+      await login(email, password);
+    } catch (err) {
+      console.error("Registration failed", err);
+      throw err;
+    }
   };
 
   const logout = () => {
     setCurrentUser(null);
-    localStorage.removeItem("aandilik_current_user");
+    localStorage.removeItem("aandilik_token");
+    setEquipment([]);
+    setUsers([]);
+    setReservations([]);
+    setTransactions([]);
   };
 
-  const addEquipment = (item: Omit<Equipment, "id">) => {
-    const newEquipment: Equipment = {
-      ...item,
-      id: Math.random().toString(36).substr(2, 9),
-    };
-    setEquipment(prev => [...prev, newEquipment]);
-  };
-
-  const updateEquipment = (id: string, updates: Partial<Equipment>) => {
-    setEquipment(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
-  };
-
-  const deleteEquipment = (id: string) => {
-    setEquipment(prev => prev.filter(item => item.id !== id));
-  };
-
-  const addReservation = (data: Omit<Reservation, "id" | "createdAt" | "status">) => {
-    const newReservation: Reservation = {
-      ...data,
-      id: "res_" + Math.random().toString(36).substr(2, 9),
-      status: "Pending",
-      createdAt: new Date().toISOString(),
-    };
-    setReservations(prev => [newReservation, ...prev]);
-  };
-
-  const updateReservationStatus = (id: string, status: Reservation["status"]) => {
-    setReservations(prev => {
-      const updated = prev.map(res => res.id === id ? { ...res, status } : res);
+  const addEquipment = async (item: Omit<Equipment, "id">) => {
+    try {
+      await apiFetch("/materiel", {
+        method: "POST",
+        body: JSON.stringify({
+          nom_equipement: item.name,
+          description: item.description,
+          prix_location: item.pricePerDay,
+          categorie: item.category,
+          localisation: item.location,
+          images: item.image
+        })
+      });
       
-      // If confirmed, generate transactions
-      if (status === "Confirmed") {
-        const res = updated.find(r => r.id === id);
-        if (res) {
-          const ownerAmount = res.totalPrice * 0.9;
-          const platformFee = res.totalPrice * 0.1;
-          const equipmentName = equipment.find(e => e.id === res.equipmentId)?.name || "Industrial machinery";
-          const renterName = users.find(u => u.id === res.renterId)?.name || "Client";
-          
-          const newTransactions: Transaction[] = [
-            {
-              id: "TX-OWN-" + Math.random().toString(36).substr(2, 9),
-              type: "Rental Income",
-              relatedId: res.id,
-              userId: res.ownerId,
-              counterparty: renterName,
-              date: new Date().toISOString().split('T')[0],
-              amount: ownerAmount,
-              status: "Cleared"
-            },
-            {
-              id: "TX-ADMIN-" + Math.random().toString(36).substr(2, 9),
-              type: "Platform Fee",
-              relatedId: res.id,
-              userId: "u3", // Admin ID
-              counterparty: equipmentName,
-              date: new Date().toISOString().split('T')[0],
-              amount: platformFee,
-              status: "Cleared"
-            }
-          ];
-          setTransactions(tPrev => [...newTransactions, ...tPrev]);
-          
-          // Update user balances (simulated)
-          setUsers(uPrev => uPrev.map(u => {
-            if (u.id === res.ownerId) return { ...u, walletBalance: (u.walletBalance || 0) + ownerAmount };
-            // Optional: subtract from renter if we tracked their wallet properly
-            return u;
-          }));
-        }
+      const ownedEquipment = await apiFetch("/materiel/owner");
+      setEquipment(ownedEquipment.map(transformEquipment));
+    } catch (err) {
+      console.error("Failed to add equipment", err);
+      throw err;
+    }
+  };
+
+  const updateEquipment = async (id: string, updates: Partial<Equipment>) => {
+    try {
+      await apiFetch(`/materiel/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          nom_equipement: updates.name,
+          description: updates.description,
+          prix_location: updates.pricePerDay,
+          localisation: updates.location,
+          images: updates.image
+        })
+      });
+      const ownedEquipment = await apiFetch("/materiel/owner");
+      setEquipment(ownedEquipment.map(transformEquipment));
+    } catch (err) {
+      console.error("Failed to update equipment", err);
+      throw err;
+    }
+  };
+
+  const deleteEquipment = async (id: string) => {
+    try {
+      await apiFetch(`/materiel/${id}`, { method: "DELETE" });
+      setEquipment(prev => prev.filter(item => item.id !== id));
+    } catch (err) {
+      console.error("Failed to delete equipment", err);
+      throw err;
+    }
+  };
+
+  const addReservation = async (data: Omit<Reservation, "id" | "createdAt" | "status">) => {
+    try {
+      await apiFetch("/reservations", {
+        method: "POST",
+        body: JSON.stringify({
+          materielId: parseInt(data.equipmentId),
+          date_debut: data.startDate,
+          date_fin: data.endDate
+        })
+      });
+      
+      const ownerReservations = await apiFetch("/reservations/owner");
+      setReservations(ownerReservations.map(transformReservation));
+    } catch (err) {
+      console.error("Failed to add reservation", err);
+      throw err;
+    }
+  };
+
+  const updateReservationStatus = async (id: string, status: Reservation["status"]) => {
+    try {
+      await apiFetch(`/reservations/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ statut: mapStatus(status) })
+      });
+      
+      if (currentUser?.role === 'Owner') {
+        const ownedReservations = await apiFetch("/reservations/owner");
+        setReservations(ownedReservations.map(transformReservation));
+        
+        // Refresh wallet
+        const userData = await apiFetch("/users/me");
+        setCurrentUser(prev => prev ? { ...prev, walletBalance: userData.solde_portefeuille } : null);
       }
-      
-      return updated;
-    });
+    } catch (err) {
+      console.error("Failed to update reservation status", err);
+      throw err;
+    }
   };
+
+  const createUser = async (name: string, email: string, password: string, role: string = "propri\u00e9taire") => {
+    try {
+      await apiFetch("/users", {
+        method: "POST",
+        body: JSON.stringify({
+          nom: name,
+          email,
+          password,
+          role: mapRoleForBackend(role)
+        })
+      });
+      // Refresh users list
+      const allUsers = await apiFetch("/users");
+      setUsers(allUsers.map((u: any) => ({
+        id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role), walletBalance: u.solde_portefeuille || 0
+      })));
+    } catch (err) {
+      console.error("Failed to create user", err);
+      throw err;
+    }
+  };
+
+  const deleteUser = async (id: string) => {
+    try {
+      await apiFetch(`/users/${id}`, { method: "DELETE" });
+      setUsers(prev => prev.filter(u => u.id !== id));
+    } catch (err) {
+      console.error("Failed to delete user", err);
+      throw err;
+    }
+  };
+
 
   return (
     <DataContext.Provider value={{
@@ -180,6 +362,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       deleteEquipment,
       addReservation,
       updateReservationStatus,
+      createUser,
+      deleteUser,
       login,
       register,
       logout
@@ -196,3 +380,4 @@ export const useData = () => {
   }
   return context;
 };
+

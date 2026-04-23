@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { Materiel } from '../../materiel/entities/materiel.entity';
+import { User } from '../../users/entities/user.entity';
 
 export enum ReservationStatus {
   EN_ATTENTE = 'en attente',
@@ -14,13 +15,13 @@ export class Reservation {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   client_nom: string;
 
-  @Column()
+  @Column({ nullable: true })
   client_telephone: string;
 
-  @Column()
+  @Column({ nullable: true })
   client_email: string;
 
   @Column()
@@ -44,4 +45,7 @@ export class Reservation {
 
   @ManyToOne(() => Materiel, (materiel) => materiel.reservations)
   materiel: Materiel;
+
+  @ManyToOne(() => User, { nullable: true })
+  client: User;
 }

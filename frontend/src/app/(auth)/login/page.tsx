@@ -19,26 +19,43 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Simulate network delay
-    setTimeout(() => {
-      const success = login(email);
+    try {
+      const success = await login(email, password);
       if (success) {
         showToast("Welcome back to Aandilik Industrial.", "success");
-        // Find user to determine role for redirection
-        const savedUser = JSON.parse(localStorage.getItem("aandilik_current_user") || "{}");
-        const role = savedUser.role?.toLowerCase() || "client";
-        router.push(`/dashboard/${role}`);
+        // Fetch from DataProvider currentUser to determine role redirect
+        const token = localStorage.getItem("aandilik_token");
+        if (token) {
+          // Decode the JWT payload to get the role for immediate redirect
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const role = payload.role?.toLowerCase();
+            if (role === 'administrateur') {
+              router.push("/dashboard/admin");
+            } else {
+              router.push("/dashboard/owner");
+            }
+          } catch {
+            router.push("/dashboard/owner");
+          }
+        } else {
+          router.push("/dashboard/owner");
+        }
       } else {
         showToast("Identity verification failed.", "error");
-        setError("Invalid credentials. Try: admin@example.com, ahmed@example.com (Owner), or fatima@example.com (Client)");
+        setError("Invalid credentials. Use admin@aandilik.com (Admin) or owner@aandilik.com (Owner)");
         setLoading(false);
       }
-    }, 800);
+    } catch (err) {
+      showToast("Connection error. Please try again.", "error");
+      setError("An unexpected error occurred.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -92,11 +109,8 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center mt-8 text-secondary text-sm">
-          New to the platform?{" "}
-          <Link href="/register" className="text-primary font-bold hover:underline">
-            Create an Account
-          </Link>
+        <p className="text-center mt-8 text-secondary text-xs max-w-sm mx-auto">
+          Accounts are managed by your system administrator. Contact your admin team for access.
         </p>
       </div>
     </div>

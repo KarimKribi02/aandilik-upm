@@ -1,6 +1,6 @@
 export type EquipmentCategory = "Earthmoving" | "Lifting" | "Concrete" | "Materials" | "Tools";
 export type ReservationStatus = "Pending" | "Confirmed" | "Cancelled" | "Completed" | "Rejected";
-export type UserRole = "Client" | "Owner" | "Admin";
+export type UserRole = "Owner" | "Admin";
 
 export interface Equipment {
   id: string;
@@ -139,7 +139,6 @@ export const equipmentList: Equipment[] = [
 
 export const users: User[] = [
   { id: "u1", name: "Ahmed Karim", role: "Owner", email: "ahmed@example.com", walletBalance: 15400 },
-  { id: "u2", name: "Fatima Zohra", role: "Client", email: "fatima@example.com", walletBalance: 500 },
   { id: "u3", name: "System Admin", role: "Admin", email: "admin@example.com" },
   { id: "u4", name: "Hassan Ben", role: "Owner", email: "hassan@example.com", walletBalance: 8200 }
 ];
