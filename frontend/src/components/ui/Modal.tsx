@@ -53,7 +53,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
           </button>
         </div>
         
-        <div className="p-8">
+        <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
           {children}
         </div>
 

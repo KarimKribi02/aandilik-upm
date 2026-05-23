@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Table, TableRow, TableCell } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { Input, Select } from "@/components/ui/FormElements";
+import { Input, Select, FileUploader } from "@/components/ui/FormElements";
 import { useData } from "@/context/DataProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Plus, Edit3, Trash2, Eye, Hammer, Construction } from "lucide-react";
@@ -25,7 +25,9 @@ export default function OwnerEquipment() {
     pricePerDay: "",
     location: "",
     description: "",
-    image: "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800"
+    poids_operationnel: "",
+    capacite_godet: "",
+    image: ""
   });
 
   // Filter equipment for the current owner
@@ -35,18 +37,13 @@ export default function OwnerEquipment() {
     e.preventDefault();
     
     if (!currentUser) {
-      showToast("Session expired or unauthenticated. Please log in again.", "error");
+      showToast("Session expired. Please log in again.", "error");
       return;
     }
 
     // Validation
     if (!formData.name || !formData.pricePerDay || !formData.location || !formData.description) {
-      showToast("Identification error: All technical fields are mandatory.", "error");
-      return;
-    }
-
-    if (Number(formData.pricePerDay) <= 0) {
-      showToast("Financial error: Rate must be a positive value.", "error");
+      showToast("Mandatory technical fields missing.", "error");
       return;
     }
 
@@ -56,17 +53,14 @@ export default function OwnerEquipment() {
       await addEquipment({
         ...formData,
         pricePerDay: Number(formData.pricePerDay),
+        poids_operationnel: Number(formData.poids_operationnel),
         ownerId: currentUser.id,
         availability: true,
         status: "pending", 
-        specs: {
-          "Condition": "Certified",
-          "Engine": "Standard",
-          "Transmission": "Manual"
-        }
+        specs: {}
       } as any);
       
-      showToast("Technical draft submitted for review.", "success");
+      showToast("Technical submission successful.", "success");
       setIsAddModalOpen(false);
       setFormData({
         name: "",
@@ -74,10 +68,12 @@ export default function OwnerEquipment() {
         pricePerDay: "",
         location: "",
         description: "",
-        image: "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800"
+        poids_operationnel: "",
+        capacite_godet: "",
+        image: ""
       });
     } catch (err: any) {
-      showToast(`Operation failed: ${err.message || 'Could not synchronize with server.'}`, "error");
+      showToast(`Submission failed: ${err.message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -88,9 +84,11 @@ export default function OwnerEquipment() {
     setFormData({
       name: item.name,
       category: item.category,
-      pricePerDay: item.pricePerDay.toString(),
+      pricePerDay: (item.pricePerDay || "").toString(),
       location: item.location,
       description: item.description,
+      poids_operationnel: (item.poids_operationnel || "").toString(),
+      capacite_godet: item.capacite_godet || "",
       image: item.image
     });
     setIsEditModalOpen(true);
@@ -106,7 +104,7 @@ export default function OwnerEquipment() {
     if (!selectedEquipment) return;
     
     if (!formData.name || !formData.pricePerDay || !formData.location || !formData.description) {
-      showToast("Identification error: All technical fields are mandatory.", "error");
+      showToast("Please fill all mandatory fields.", "error");
       return;
     }
 
@@ -118,6 +116,8 @@ export default function OwnerEquipment() {
         pricePerDay: Number(formData.pricePerDay),
         location: formData.location,
         description: formData.description,
+        poids_operationnel: Number(formData.poids_operationnel),
+        capacite_godet: formData.capacite_godet,
         image: formData.image
       });
       showToast("Asset information updated.", "success");
@@ -214,7 +214,7 @@ export default function OwnerEquipment() {
           </>
         )}
       >
-        <form className="flex flex-col gap-5">
+        <form className="flex flex-col gap-4">
           <Input 
             label="Equipment Name" 
             placeholder="e.g. Caterpillar 320D" 
@@ -251,10 +251,30 @@ export default function OwnerEquipment() {
             onChange={(e: any) => setFormData({...formData, location: e.target.value})}
             required 
           />
+          <div className="grid grid-cols-2 gap-4">
+            <Input 
+              label="Weight (t)" 
+              type="number"
+              placeholder="22.5"
+              value={formData.poids_operationnel}
+              onChange={(e: any) => setFormData({...formData, poids_operationnel: e.target.value})}
+            />
+            <Input 
+              label="Bucket (m³)" 
+              placeholder="1.2"
+              value={formData.capacite_godet}
+              onChange={(e: any) => setFormData({...formData, capacite_godet: e.target.value})}
+            />
+          </div>
+          <FileUploader 
+            label="Equipment Photo" 
+            value={formData.image} 
+            onChange={(base64) => setFormData({...formData, image: base64})} 
+          />
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-2 block ml-1">Asset Description</label>
             <textarea 
-              className="w-full h-32 px-4 py-3 rounded-xl bg-surface-low border-none focus:ring-2 focus:ring-primary text-sm transition-all outline-none resize-none"
+              className="w-full h-24 px-4 py-3 rounded-xl bg-surface-low border-none focus:ring-2 focus:ring-primary text-sm transition-all outline-none resize-none"
               placeholder="Detail specs, usage history, and condition..."
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -276,7 +296,7 @@ export default function OwnerEquipment() {
           </>
         )}
       >
-        <form className="flex flex-col gap-5">
+        <form className="flex flex-col gap-4">
           <Input 
             label="Equipment Name" 
             value={formData.name}
@@ -310,10 +330,28 @@ export default function OwnerEquipment() {
             onChange={(e: any) => setFormData({...formData, location: e.target.value})}
             required 
           />
+          <div className="grid grid-cols-2 gap-4">
+            <Input 
+              label="Weight (t)" 
+              type="number"
+              value={formData.poids_operationnel}
+              onChange={(e: any) => setFormData({...formData, poids_operationnel: e.target.value})}
+            />
+            <Input 
+              label="Bucket (m³)" 
+              value={formData.capacite_godet}
+              onChange={(e: any) => setFormData({...formData, capacite_godet: e.target.value})}
+            />
+          </div>
+          <FileUploader 
+            label="Update Photo" 
+            value={formData.image} 
+            onChange={(base64) => setFormData({...formData, image: base64})} 
+          />
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-secondary mb-2 block ml-1">Asset Description</label>
             <textarea 
-              className="w-full h-32 px-4 py-3 rounded-xl bg-surface-low border-none focus:ring-2 focus:ring-primary text-sm transition-all outline-none resize-none"
+              className="w-full h-24 px-4 py-3 rounded-xl bg-surface-low border-none focus:ring-2 focus:ring-primary text-sm transition-all outline-none resize-none"
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               required

@@ -15,7 +15,10 @@ import {
   Settings,
   LogOut,
   ChevronRight,
-  Construction
+  Construction,
+  Handshake,
+  BookOpen,
+  UserCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useData } from "@/context/DataProvider";
@@ -31,14 +34,15 @@ const navItems: Record<Role, { href: string; label: string; icon: any }[]> = {
     { href: "/dashboard/owner", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/owner/equipment", label: "My Fleet", icon: Hammer },
     { href: "/dashboard/owner/reservations", label: "Rental Requests", icon: Clock },
-    { href: "/dashboard/owner/wallet", label: "Wallet & Earnings", icon: Wallet },
   ],
   admin: [
     { href: "/dashboard/admin", label: "Operations", icon: LayoutDashboard },
     { href: "/dashboard/admin/users", label: "User Control", icon: Users },
     { href: "/dashboard/admin/equipment", label: "Fleet Validation", icon: ShieldCheck },
     { href: "/dashboard/admin/reservations", label: "Global Monitoring", icon: History },
-    { href: "/dashboard/admin/transactions", label: "Financials", icon: DollarSign },
+    { href: "/dashboard/admin/blog", label: "Blog Content", icon: BookOpen },
+    { href: "/dashboard/admin/partners", label: "Partners", icon: Handshake },
+    { href: "/dashboard/admin/experts", label: "Experts & Équipe", icon: UserCheck },
   ],
 };
 

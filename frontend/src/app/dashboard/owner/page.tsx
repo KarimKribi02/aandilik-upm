@@ -25,14 +25,10 @@ export default function OwnerOverview() {
 
   const activeRentals = myReservations.filter(r => r.status === "Confirmed").length;
   const pendingRequests = myReservations.filter(r => r.status === "Pending").length;
-  const totalRevenue = myReservations
-    .filter(r => r.status === "Confirmed" || r.status === "Completed")
-    .reduce((acc, curr) => acc + curr.totalPrice, 0);
 
   const stats = [
     { label: "Active Rentals", value: activeRentals.toString(), icon: BarChart3, color: "text-blue-500" },
     { label: "Pending Requests", value: pendingRequests.toString(), icon: Clock, color: "text-orange-500" },
-    { label: "Total Revenue", value: `$${(totalRevenue / 1000).toFixed(1)}k`, icon: CheckCircle2, color: "text-green-500" },
   ];
 
   return (

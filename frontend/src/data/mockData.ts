@@ -14,6 +14,8 @@ export interface Equipment {
   description: string;
   specs: { [key: string]: string };
   status: "active" | "pending" | "rejected";
+  poids_operationnel?: number;
+  capacite_godet?: string;
 }
 
 export interface User {
@@ -22,7 +24,6 @@ export interface User {
   role: UserRole;
   email: string;
   avatar?: string;
-  walletBalance?: number;
 }
 
 export interface Reservation {
@@ -37,16 +38,6 @@ export interface Reservation {
   createdAt: string;
 }
 
-export interface Transaction {
-  id: string;
-  type: "Rental Income" | "Platform Fee" | "Deposit" | "Withdrawal";
-  relatedId: string; // Reservation ID or other
-  userId: string; // User who receives/pays
-  counterparty: string;
-  date: string;
-  amount: number;
-  status: "Cleared" | "Pending" | "Processing";
-}
 
 export const equipmentList: Equipment[] = [
   {
@@ -138,9 +129,9 @@ export const equipmentList: Equipment[] = [
 ];
 
 export const users: User[] = [
-  { id: "u1", name: "Ahmed Karim", role: "Owner", email: "ahmed@example.com", walletBalance: 15400 },
+  { id: "u1", name: "Ahmed Karim", role: "Owner", email: "ahmed@example.com" },
   { id: "u3", name: "System Admin", role: "Admin", email: "admin@example.com" },
-  { id: "u4", name: "Hassan Ben", role: "Owner", email: "hassan@example.com", walletBalance: 8200 }
+  { id: "u4", name: "Hassan Ben", role: "Owner", email: "hassan@example.com" }
 ];
 
 export const reservations: Reservation[] = [
@@ -168,8 +159,56 @@ export const reservations: Reservation[] = [
   }
 ];
 
-export const transactions: Transaction[] = [
-  { id: "TX-1", type: "Rental Income", relatedId: "r1", userId: "u4", counterparty: "Fatima Zohra", date: "2026-04-12", amount: 2340, status: "Cleared" },
-  { id: "TX-2", type: "Platform Fee", relatedId: "r1", userId: "u3", counterparty: "Manitou MRT", date: "2026-04-12", amount: 260, status: "Cleared" },
+
+export interface Partner {
+  id: string;
+  name: string;
+  logo: string;
+  createdAt: string;
+}
+
+export const mockPartners: Partner[] = [
+  { id: "p1", name: "CAT", logo: "", createdAt: "" },
+  { id: "p2", name: "KOMATSU", logo: "", createdAt: "" },
+  { id: "p3", name: "VOLVO", logo: "", createdAt: "" },
+  { id: "p4", name: "DOOSAN", logo: "", createdAt: "" },
+  { id: "p5", name: "HITACHI", logo: "", createdAt: "" },
+  { id: "p6", name: "JCB", logo: "", createdAt: "" },
+  { id: "p7", name: "LIEBHERR", logo: "", createdAt: "" },
 ];
 
+export interface Article {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  image: string;
+  createdAt: string;
+}
+
+export const mockArticles: Article[] = [
+  {
+    id: "1",
+    category: "CONSEILS",
+    createdAt: "2024-05-12T10:00:00Z",
+    title: "Comment choisir le bon engin pour votre chantier ?",
+    content: "Nos experts vous donnent les clés pour choisir le matériel adapté à vos besoins.",
+    image: "https://images.pexels.com/photos/159306/construction-site-build-construction-work-159306.jpeg?auto=compress&cs=tinysrgb&w=800"
+  },
+  {
+    id: "2",
+    category: "SÉCURITÉ",
+    createdAt: "2024-04-28T10:00:00Z",
+    title: "Sécurité sur chantier : les bonnes pratiques à adopter",
+    content: "Les règles essentielles pour assurer la sécurité de vos équipes et de vos équipements.",
+    image: "https://images.pexels.com/photos/2209529/pexels-photo-2209529.jpeg?auto=compress&cs=tinysrgb&w=800"
+  },
+  {
+    id: "3",
+    category: "GUIDE",
+    createdAt: "2024-04-15T10:00:00Z",
+    title: "Les avantages de la location de matériel lourd",
+    content: "Pourquoi la location est la solution la plus rentable pour vos projets.",
+    image: "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800"
+  }
+];

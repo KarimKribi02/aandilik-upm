@@ -30,10 +30,13 @@ export default function DashboardLayout({
     // Checking precise role matching when currentUser data is hydrated
     if (currentUser) {
       const userRole = currentUser.role.toLowerCase();
-      if (requiredRole === "admin" && userRole !== "admin") {
-        router.push(userRole === "owner" ? "/dashboard/owner" : "/");
+      const isAdmin = userRole === "admin" || userRole.includes("admin");
+      const isOwner = userRole === "owner" || userRole.includes("propri");
+
+      if (requiredRole === "admin" && !isAdmin) {
+        router.push(isOwner ? "/dashboard/owner" : "/");
       }
-      if (requiredRole === "owner" && userRole !== "owner" && userRole !== "admin") {
+      if (requiredRole === "owner" && !isOwner && !isAdmin) {
         router.push("/");
       }
     }

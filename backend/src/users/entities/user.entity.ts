@@ -15,9 +15,6 @@ export class User {
   @Column({ nullable: true })
   nom: string;
 
-  @Column('float', { default: 0 })
-  solde_portefeuille: number;
-
   @Column({ unique: true })
   email: string;
 

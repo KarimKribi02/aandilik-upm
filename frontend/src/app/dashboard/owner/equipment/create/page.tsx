@@ -37,6 +37,10 @@ export default function CreateEquipment() {
               <Input label="Daily Rental Rate ($)" type="number" placeholder="450" />
               <Input label="Site Location" placeholder="Casablanca, Morocco" />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input label="Operating Weight (t)" type="number" placeholder="22.5" />
+              <Input label="Bucket Capacity (m³)" placeholder="1.2" />
+            </div>
             <TextArea label="Equipment Description" placeholder="Describe technical capabilities, maintenance history, and site requirements..." />
           </Card>
 

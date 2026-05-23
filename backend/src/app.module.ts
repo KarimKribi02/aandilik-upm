@@ -7,9 +7,17 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { MaterielModule } from './materiel/materiel.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { BlogModule } from './blog/blog.module';
+import { PartnersModule } from './partners/partners.module';
+import { ExpertsModule } from './experts/experts.module';
 import { User } from './users/entities/user.entity';
 import { Materiel } from './materiel/entities/materiel.entity';
 import { Reservation } from './reservations/entities/reservation.entity';
+import { Article } from './blog/entities/article.entity';
+import { Partner } from './partners/entities/partner.entity';
+import { Expert } from './experts/entities/expert.entity';
+import { DemandsModule } from './demands/demands.module';
+import { Demand } from './demands/entities/demand.entity';
 
 @Module({
   imports: [
@@ -21,13 +29,17 @@ import { Reservation } from './reservations/entities/reservation.entity';
       username: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'aandilik',
-      entities: [User, Materiel, Reservation],
-      synchronize: true, // Set to false in production
+      entities: [User, Materiel, Reservation, Article, Partner, Expert, Demand],
+      synchronize: true,
     }),
     UsersModule,
     AuthModule,
     MaterielModule,
     ReservationsModule,
+    BlogModule,
+    PartnersModule,
+    ExpertsModule,
+    DemandsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -19,4 +19,16 @@ export class CreateMaterielDto {
   @IsString()
   @IsOptional()
   images?: string;
+
+  @IsNumber()
+  @IsOptional()
+  poids_operationnel?: number;
+
+  @IsString()
+  @IsOptional()
+  capacite_godet?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: string;
 }

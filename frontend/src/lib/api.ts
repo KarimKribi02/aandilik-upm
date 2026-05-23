@@ -30,5 +30,6 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     throw new Error(errorMessage || "An error occurred during the API request");
   }
 
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }

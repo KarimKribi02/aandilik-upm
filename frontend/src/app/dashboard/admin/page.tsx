@@ -8,17 +8,13 @@ import {
   Users, 
   Construction, 
   Activity, 
-  TrendingUp,
   ShieldCheck,
-  ArrowRight,
   MoreVertical
 } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminOverview() {
-  const { users, equipment, transactions } = useData();
-
-  const totalVolume = (transactions || []).reduce((acc, tx) => acc + tx.amount, 0);
+  const { users, equipment } = useData();
 
   const stats = [
     { label: "Total Users", value: (users || []).length.toString(), icon: Users, color: "text-purple-500" },
@@ -94,19 +90,7 @@ export default function AdminOverview() {
 
         {/* Global Statistics */}
         <div className="lg:col-span-4 flex flex-col gap-8">
-          <h3 className="text-2xl font-bold">Network Growth</h3>
-          <Card variant="high" className="p-8 primary-gradient text-white flex flex-col gap-6 relative overflow-hidden group">
-            <div className="relative z-10 flex flex-col gap-2">
-              <h4 className="font-bold text-lg">Transaction Volume</h4>
-              <p className="text-white/70 text-xs">Processing ${totalVolume.toLocaleString()} in active industrial contracts this month.</p>
-              <Link href="/dashboard/admin/transactions">
-                <Button variant="glass" className="mt-4 w-full justify-between group">
-                  Financial Report <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
-            </div>
-            <TrendingUp size={120} className="absolute -bottom-10 -right-10 text-white opacity-10" />
-          </Card>
+          <h3 className="text-2xl font-bold">Network Resilience</h3>
 
           <div className="p-8 bg-surface-low rounded-3xl border border-surface-container">
             <h4 className="font-bold text-sm mb-4">Security Overview</h4>

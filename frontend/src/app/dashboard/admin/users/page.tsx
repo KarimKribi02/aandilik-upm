@@ -137,7 +137,7 @@ export default function AdminUsers() {
         </Card>
       </div>
 
-      <Table headers={["User Profile", "System Role", "Wallet Balance", "Status", "Actions"]}>
+      <Table headers={["User Profile", "System Role", "Status", "Actions"]}>
         {filteredUsers.length > 0 ? filteredUsers.map((user) => (
           <TableRow key={user.id}>
             <TableCell>
@@ -160,11 +160,6 @@ export default function AdminUsers() {
               }`}>
                 {user.role}
               </span>
-            </TableCell>
-            <TableCell>
-              <div className="text-sm font-bold">
-                {user.walletBalance ? `$${user.walletBalance.toLocaleString()}` : "—"}
-              </div>
             </TableCell>
             <TableCell>
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-green-600">
@@ -191,7 +186,6 @@ export default function AdminUsers() {
             <TableCell className="text-center py-12 text-secondary italic">
               No users found matching your search.
             </TableCell>
-            <TableCell>{""}</TableCell>
             <TableCell>{""}</TableCell>
             <TableCell>{""}</TableCell>
             <TableCell>{""}</TableCell>

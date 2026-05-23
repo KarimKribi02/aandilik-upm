@@ -25,6 +25,15 @@ export class Materiel {
   @Column('text', { nullable: true })
   images: string; // Stored as a string (could be JSON or comma-separated)
 
+  @Column('float', { nullable: true })
+  poids_operationnel: number;
+
+  @Column({ nullable: true })
+  capacite_godet: string;
+
+  @Column({ default: 'pending' })
+  status: string; // 'pending', 'active', 'rejected'
+
   @ManyToOne(() => User, (user) => user.materiels)
   proprietaire: User;
 

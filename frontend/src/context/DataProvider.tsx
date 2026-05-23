@@ -5,45 +5,60 @@ import {
   Equipment, 
   User, 
   Reservation, 
-  Transaction,
   equipmentList as initialEquipment, 
   users as initialUsers, 
   reservations as initialReservations,
-  transactions as initialTransactions
+  Article,
+  Partner
 } from "@/data/mockData";
 import { apiFetch } from "@/lib/api";
+
+export interface Expert {
+  id: string;
+  name: string;
+  role: string;
+  image: string;
+}
 
 interface DataContextType {
   equipment: Equipment[];
   users: User[];
   reservations: Reservation[];
-  transactions: Transaction[];
+  articles: Article[];
+  partners: Partner[];
+  experts: Expert[];
   currentUser: User | null;
   addEquipment: (item: Omit<Equipment, "id">) => Promise<void>;
   updateEquipment: (id: string, item: Partial<Equipment>) => Promise<void>;
   deleteEquipment: (id: string) => Promise<void>;
   addReservation: (reservation: Omit<Reservation, "id" | "createdAt" | "status">) => Promise<void>;
   updateReservationStatus: (id: string, status: Reservation["status"]) => Promise<void>;
+  addArticle: (data: Omit<Article, "id" | "createdAt">) => Promise<void>;
+  deleteArticle: (id: string) => Promise<void>;
+  addPartner: (data: { name: string; logo: string }) => Promise<void>;
+  deletePartner: (id: string) => Promise<void>;
+  addExpert: (data: { name: string; role: string; image: string }) => Promise<void>;
+  deleteExpert: (id: string) => Promise<void>;
   createUser: (name: string, email: string, password: string, role?: string) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
   login: (email: string, password?: string) => Promise<boolean>;
   register: (name: string, email: string, role: string, password?: string) => Promise<void>;
   logout: () => void;
+  addDemand: (data: any) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 // Mappings Backend (French) <-> Frontend (English)
 const mapRole = (role: string): any => {
-  if (!role) return role;
-  const normalized = role.toLowerCase();
+  if (!role) return 'Owner';
+  const normalized = role.toLowerCase().trim();
   
   // From backend to frontend
-  if (normalized === 'administrateur') return 'Admin';
-  if (normalized === 'propriétaire' || normalized === 'proprietaire' || normalized === 'owner') return 'Owner';
-  if (normalized === 'client' || normalized === 'locataire') return 'Owner'; // fallback to Owner
+  if (normalized.includes('admin')) return 'Admin';
+  if (normalized.includes('propri') || normalized.includes('owner') || normalized === 'client' || normalized === 'locataire') return 'Owner';
 
-  return role;
+  return 'Owner'; // default fallback
 };
 
 const mapRoleForBackend = (role: string): string => {
@@ -68,19 +83,33 @@ const mapStatus = (status: string): any => {
   return 'Pending';
 };
 
-const transformEquipment = (item: any): Equipment => ({
-  id: item.id.toString(),
-  ownerId: item.proprietaire?.id?.toString() || "",
-  name: item.nom_equipement,
-  category: item.categorie as any,
-  pricePerDay: item.prix_location,
-  location: item.localisation,
-  availability: true, // Typically calculated or fetched
-  image: item.images || "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800",
-  description: item.description,
-  specs: {},
-  status: "active"
-});
+const transformEquipment = (item: any): Equipment => {
+  const rawImage = item.images || item.image || "";
+  const isValidImage = rawImage && 
+                      rawImage !== "null" && 
+                      rawImage !== "undefined" && 
+                      rawImage.length > 10; // Basic check for real data or long URLs
+
+  const imageUrl = isValidImage 
+    ? rawImage 
+    : "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800";
+
+  return {
+    id: item.id.toString(),
+    ownerId: item.proprietaire?.id?.toString() || "",
+    name: item.nom_equipement,
+    category: item.categorie as any,
+    pricePerDay: item.prix_location,
+    location: item.localisation,
+    availability: true, 
+    image: imageUrl,
+    description: item.description,
+    specs: {},
+    status: item.status || "pending",
+    poids_operationnel: item.poids_operationnel,
+    capacite_godet: item.capacite_godet
+  };
+};
 
 const transformReservation = (item: any): Reservation => ({
   id: item.id.toString(),
@@ -94,11 +123,22 @@ const transformReservation = (item: any): Reservation => ({
   createdAt: new Date().toISOString() // Backend lacks createdAt currently
 });
 
+const transformArticle = (item: any): Article => ({
+  id: item.id.toString(),
+  title: item.title,
+  content: item.content,
+  category: item.category,
+  image: item.image,
+  createdAt: item.createdAt
+});
+
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [experts, setExperts] = useState<Expert[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -113,8 +153,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: userData.id.toString(),
             name: userData.nom,
             email: userData.email,
-            role: mapRole(userData.role),
-            walletBalance: userData.solde_portefeuille || 0
+            role: mapRole(userData.role)
           };
           setCurrentUser(user);
 
@@ -130,7 +169,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setReservations(allReservations.map(transformReservation));
             const allUsers = await apiFetch("/users");
             setUsers(allUsers.map((u: any) => ({
-              id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role), walletBalance: u.solde_portefeuille || 0
+              id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role)
             })));
           }
         } catch (err) {
@@ -139,16 +178,49 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setEquipment([]);
           setUsers([]);
           setReservations([]);
-          setTransactions([]);
+          setArticles([]);
           setCurrentUser(null);
         }
       } else {
         setEquipment([]);
         setUsers([]);
         setReservations([]);
-        setTransactions([]);
+        setArticles([]);
         setCurrentUser(null);
       }
+
+      // Always load articles & partners publicly
+      try {
+        const blogData = await apiFetch("/blog");
+        setArticles(blogData.map(transformArticle));
+      } catch (err) {
+        console.error("Failed to fetch articles", err);
+      }
+
+      try {
+        const partnersData = await apiFetch("/partners");
+        setPartners(partnersData.map((p: any): Partner => ({
+          id: p.id.toString(),
+          name: p.name,
+          logo: p.logo || "",
+          createdAt: p.createdAt || ""
+        })));
+      } catch (err) {
+        console.error("Failed to fetch partners", err);
+      }
+
+      try {
+        const expertsData = await apiFetch("/experts");
+        setExperts(expertsData.map((e: any): Expert => ({
+          id: e.id.toString(),
+          name: e.name,
+          role: e.role,
+          image: e.image || ""
+        })));
+      } catch (err) {
+        console.error("Failed to fetch experts", err);
+      }
+
       setIsLoaded(true);
     };
 
@@ -165,14 +237,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem("aandilik_token", data.access_token);
       
       const userData = await apiFetch("/users/me");
-      const user = {
+      const user: User = {
         id: userData.id.toString(),
         name: userData.nom,
         email: userData.email,
-        role: mapRole(userData.role),
-        walletBalance: userData.solde_portefeuille || 0
+        role: mapRole(userData.role)
       };
-
+      
       setCurrentUser(user);
       
       if (user.role === 'Owner') {
@@ -187,7 +258,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setReservations(allReservations.map(transformReservation));
         const allUsers = await apiFetch("/users");
         setUsers(allUsers.map((u: any) => ({
-          id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role), walletBalance: u.solde_portefeuille || 0
+          id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role)
         })));
       }
 
@@ -222,12 +293,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setEquipment([]);
     setUsers([]);
     setReservations([]);
-    setTransactions([]);
   };
 
-  const addEquipment = async (item: Omit<Equipment, "id">) => {
+  const addEquipment = async (item: any) => {
     try {
-      await apiFetch("/materiel", {
+      const response = await apiFetch("/materiel", {
         method: "POST",
         body: JSON.stringify({
           nom_equipement: item.name,
@@ -235,12 +305,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           prix_location: item.pricePerDay,
           categorie: item.category,
           localisation: item.location,
-          images: item.image
+          images: item.image,
+          poids_operationnel: item.poids_operationnel,
+          capacite_godet: item.capacite_godet,
+          status: item.status || "pending"
         })
       });
       
-      const ownedEquipment = await apiFetch("/materiel/owner");
-      setEquipment(ownedEquipment.map(transformEquipment));
+      const newEquip = transformEquipment(response);
+      setEquipment(prev => [...prev, newEquip]);
     } catch (err) {
       console.error("Failed to add equipment", err);
       throw err;
@@ -249,18 +322,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateEquipment = async (id: string, updates: Partial<Equipment>) => {
     try {
-      await apiFetch(`/materiel/${id}`, {
+      const response = await apiFetch(`/materiel/${id}`, {
         method: "PATCH",
         body: JSON.stringify({
           nom_equipement: updates.name,
           description: updates.description,
           prix_location: updates.pricePerDay,
           localisation: updates.location,
-          images: updates.image
+          images: updates.image,
+          status: updates.status,
+          poids_operationnel: updates.poids_operationnel,
+          capacite_godet: updates.capacite_godet
         })
       });
-      const ownedEquipment = await apiFetch("/materiel/owner");
-      setEquipment(ownedEquipment.map(transformEquipment));
+      
+      const updatedItem = transformEquipment(response);
+      setEquipment(prev => prev.map(item => item.id === id ? updatedItem : item));
     } catch (err) {
       console.error("Failed to update equipment", err);
       throw err;
@@ -306,10 +383,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (currentUser?.role === 'Owner') {
         const ownedReservations = await apiFetch("/reservations/owner");
         setReservations(ownedReservations.map(transformReservation));
-        
-        // Refresh wallet
-        const userData = await apiFetch("/users/me");
-        setCurrentUser(prev => prev ? { ...prev, walletBalance: userData.solde_portefeuille } : null);
       }
     } catch (err) {
       console.error("Failed to update reservation status", err);
@@ -331,7 +404,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Refresh users list
       const allUsers = await apiFetch("/users");
       setUsers(allUsers.map((u: any) => ({
-        id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role), walletBalance: u.solde_portefeuille || 0
+        id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role)
       })));
     } catch (err) {
       console.error("Failed to create user", err);
@@ -349,24 +422,128 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const addArticle = async (data: Omit<Article, "id" | "createdAt">) => {
+    try {
+      await apiFetch("/blog", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      const blogData = await apiFetch("/blog");
+      setArticles(blogData.map(transformArticle));
+    } catch (err) {
+      console.error("Failed to add article", err);
+      throw err;
+    }
+  };
+
+  const deleteArticle = async (id: string) => {
+    try {
+      await apiFetch(`/blog/${id}`, { method: "DELETE" });
+      setArticles(prev => prev.filter(a => a.id !== id));
+    } catch (err) {
+      console.error("Failed to delete article", err);
+      throw err;
+    }
+  };
+
+
+  const addPartner = async (data: { name: string; logo: string }) => {
+    try {
+      await apiFetch("/partners", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      const partnersData = await apiFetch("/partners");
+      setPartners(partnersData.map((p: any): Partner => ({
+        id: p.id.toString(),
+        name: p.name,
+        logo: p.logo || "",
+        createdAt: p.createdAt || ""
+      })));
+    } catch (err) {
+      console.error("Failed to add partner", err);
+      throw err;
+    }
+  };
+
+  const deletePartner = async (id: string) => {
+    try {
+      await apiFetch(`/partners/${id}`, { method: "DELETE" });
+      setPartners(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error("Failed to delete partner", err);
+      throw err;
+    }
+  };
+
+  const addExpert = async (data: { name: string; role: string; image: string }) => {
+    try {
+      await apiFetch("/experts", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      const expertsData = await apiFetch("/experts");
+      setExperts(expertsData.map((e: any): Expert => ({
+        id: e.id.toString(),
+        name: e.name,
+        role: e.role,
+        image: e.image || ""
+      })));
+    } catch (err) {
+      console.error("Failed to add expert", err);
+      throw err;
+    }
+  };
+
+  const deleteExpert = async (id: string) => {
+    try {
+      await apiFetch(`/experts/${id}`, { method: "DELETE" });
+      setExperts(prev => prev.filter(e => e.id !== id));
+    } catch (err) {
+      console.error("Failed to delete expert", err);
+      throw err;
+    }
+  };
+
+  const addDemand = async (data: any) => {
+    try {
+      await apiFetch("/demands", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    } catch (err) {
+      console.error("Failed to add demand", err);
+      throw err;
+    }
+  };
+
 
   return (
     <DataContext.Provider value={{
       equipment,
       users,
       reservations,
-      transactions,
+      articles,
+      partners,
+      experts,
       currentUser,
       addEquipment,
       updateEquipment,
       deleteEquipment,
       addReservation,
       updateReservationStatus,
+      addArticle,
+      deleteArticle,
+      addPartner,
+      deletePartner,
+      addExpert,
+      deleteExpert,
       createUser,
       deleteUser,
       login,
       register,
-      logout
+      logout,
+      addDemand
     }}>
       {children}
     </DataContext.Provider>
@@ -380,4 +557,3 @@ export const useData = () => {
   }
   return context;
 };
-

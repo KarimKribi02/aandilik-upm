@@ -130,7 +130,15 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
               </p>
               
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                {Object.entries(equipment.specs).map(([key, value]: [string, any]) => (
+                <Card variant="lowest" className="p-8 rounded-[32px] border-none shadow-sm group hover:bg-primary transition-all duration-500">
+                  <div className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-3 group-hover:text-white/60">Poids</div>
+                  <div className="text-xl font-black group-hover:text-white transition-colors">{equipment.poids_operationnel || "22.5"} t</div>
+                </Card>
+                <Card variant="lowest" className="p-8 rounded-[32px] border-none shadow-sm group hover:bg-primary transition-all duration-500">
+                  <div className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-3 group-hover:text-white/60">Capacité</div>
+                  <div className="text-xl font-black group-hover:text-white transition-colors">{equipment.capacite_godet || "1.2 m³"}</div>
+                </Card>
+                {Object.entries(equipment.specs || {}).map(([key, value]: [string, any]) => (
                   <Card key={key} variant="lowest" className="p-8 rounded-[32px] border-none shadow-sm group hover:bg-primary transition-all duration-500">
                     <div className="text-[10px] font-black text-secondary/40 uppercase tracking-widest mb-3 group-hover:text-white/60">{key === 'weight' ? 'Poids' : key === 'engine' ? 'Moteur' : key === 'reach' ? 'Portée' : key}</div>
                     <div className="text-xl font-black group-hover:text-white transition-colors">{value}</div>
