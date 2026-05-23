@@ -41,7 +41,7 @@ export class ReservationsService {
     const reservation = this.reservationRepository.create({
       ...reservationData,
       materiel,
-      client,
+      client: client || null,
       prix_total,
       commission,
       statut: ReservationStatus.EN_ATTENTE,

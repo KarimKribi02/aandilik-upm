@@ -22,8 +22,8 @@ export class Materiel {
   @Column()
   localisation: string;
 
-  @Column('text', { nullable: true })
-  images: string; // Stored as a string (could be JSON or comma-separated)
+  @Column('longtext', { nullable: true })
+  images: string; // Stored as a URL (preferred) or base64 fallback
 
   @Column('float', { nullable: true })
   poids_operationnel: number;

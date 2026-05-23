@@ -11,16 +11,17 @@ export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @SetMetadata('roles', [UserRole.PROPRIETAIRE, UserRole.ADMINISTRATEUR])
   create(@Body() body: any, @Request() req) {
-    const reservationData = body.reservation || {
-      date_debut: body.date_debut || body.startDate,
-      date_fin: body.date_fin || body.endDate,
-      statut: body.statut,
+    const reservationData = {
+      client_nom: body.client_nom || (body.reservation && body.reservation.client_nom),
+      client_telephone: body.client_telephone || (body.reservation && body.reservation.client_telephone),
+      client_email: body.client_email || (body.reservation && body.reservation.client_email),
+      date_debut: body.date_debut || body.startDate || (body.reservation && body.reservation.date_debut),
+      date_fin: body.date_fin || body.endDate || (body.reservation && body.reservation.date_fin),
+      statut: body.statut || (body.reservation && body.reservation.statut),
     };
-    const materielId = body.materielId || body.equipmentId;
-    return this.reservationsService.create(reservationData, materielId, req.user);
+    const materielId = body.materielId || body.equipmentId || (body.reservation && body.reservation.materielId);
+    return this.reservationsService.create(reservationData as any, +materielId, req.user);
   }
 
   @Patch(':id')

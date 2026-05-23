@@ -4,21 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
-  CalendarRange, 
   Hammer, 
-  Wallet, 
   Clock, 
   Users, 
   ShieldCheck, 
   History, 
-  DollarSign,
   Settings,
   LogOut,
   ChevronRight,
   Construction,
   Handshake,
   BookOpen,
-  UserCheck
+  UserCheck,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useData } from "@/context/DataProvider";
@@ -27,6 +25,8 @@ type Role = "owner" | "admin";
 
 interface SidebarProps {
   role: Role;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const navItems: Record<Role, { href: string; label: string; icon: any }[]> = {
@@ -46,51 +46,91 @@ const navItems: Record<Role, { href: string; label: string; icon: any }[]> = {
   ],
 };
 
-export const Sidebar = ({ role }: SidebarProps) => {
+export const Sidebar = ({ role, isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const { logout } = useData();
   const items = navItems[role] || navItems.owner;
 
   return (
-    <aside className="w-72 h-screen fixed left-0 top-0 border-r border-surface-container bg-surface flex flex-col p-8 z-40">
-      <div className="flex items-center gap-3 mb-12">
-        <div className="w-8 h-8 primary-gradient rounded-xl flex items-center justify-center text-white">
-          <Construction size={18} />
-        </div>
-        <span className="font-bold text-xl tracking-tight">Aandilik <span className="text-secondary font-medium">Ops</span></span>
-      </div>
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          onClick={onClose}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 lg:hidden"
+        />
+      )}
 
-      <nav className="flex-1 flex flex-col gap-2">
-        <div className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em] mb-4 opacity-50">Main Menu</div>
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all group",
-              pathname === item.href
-                ? "bg-primary text-white cosmic-shadow"
-                : "text-secondary hover:bg-surface-low hover:text-foreground"
-            )}
+      <aside 
+        className={cn(
+          "w-72 h-screen fixed left-0 top-0 border-r border-slate-200/50 bg-white flex flex-col p-8 z-40 transition-transform duration-300 lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 primary-gradient rounded-xl flex items-center justify-center text-white shadow-sm shadow-primary/20">
+              <Construction size={18} />
+            </div>
+            <span className="font-bold text-xl tracking-tight text-slate-900">
+              Aandilik <span className="text-primary font-medium">Ops</span>
+            </span>
+          </div>
+
+          <button 
+            onClick={onClose}
+            className="lg:hidden p-1 rounded-lg hover:bg-slate-100 text-slate-500"
           >
-            <item.icon size={20} className={cn(pathname === item.href ? "text-white" : "text-primary")} />
-            <span className="flex-1">{item.label}</span>
-            {pathname === item.href && <ChevronRight size={14} className="opacity-50" />}
-          </Link>
-        ))}
-      </nav>
+            <X size={20} />
+          </button>
+        </div>
 
-      <div className="flex flex-col gap-2 mt-auto pt-8 border-t border-surface-container">
-        <Link href="#" className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-secondary hover:bg-surface-low transition-all">
-          <Settings size={20} /> Settings
-        </Link>
-        <button 
-          onClick={() => logout()}
-          className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-orange-600 hover:bg-orange-50 transition-all text-left"
-        >
-          <LogOut size={20} /> Exit Dashboard
-        </button>
-      </div>
-    </aside>
+        <nav className="flex-1 flex flex-col gap-1.5">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Main Menu</div>
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onClose}
+              className={cn(
+                "flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all group active:scale-95",
+                pathname === item.href
+                  ? "bg-primary text-white shadow-md shadow-primary/20"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              )}
+            >
+              <item.icon 
+                size={20} 
+                className={cn(
+                  "transition-colors",
+                  pathname === item.href ? "text-white" : "text-primary group-hover:text-primary-dark"
+                )} 
+              />
+              <span className="flex-1">{item.label}</span>
+              {pathname === item.href && <ChevronRight size={14} className="opacity-50" />}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex flex-col gap-2 mt-auto pt-8 border-t border-slate-100">
+          <Link 
+            href="#" 
+            onClick={onClose}
+            className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all active:scale-95"
+          >
+            <Settings size={20} /> Settings
+          </Link>
+          <button 
+            onClick={() => {
+              onClose();
+              logout();
+            }}
+            className="flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-all text-left active:scale-95"
+          >
+            <LogOut size={20} /> Exit Dashboard
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };

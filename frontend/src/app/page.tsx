@@ -36,6 +36,9 @@ export default function Home() {
     ? [...articles].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3)
     : [];
   const [searchQuery, setSearchQuery] = useState("");
+  const [category, setCategory] = useState("Toutes catégories");
+  const [location, setLocation] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   const [showVideo, setShowVideo] = useState(false);
   const [isDemandModalOpen, setIsDemandModalOpen] = useState(false);
   const router = useRouter();
@@ -54,10 +57,17 @@ export default function Home() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(`/equipment?search=${encodeURIComponent(searchQuery)}`);
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.append("search", searchQuery.trim());
+    if (category !== "Toutes catégories") params.append("category", category);
+    if (location.trim()) params.append("location", location.trim());
+    if (maxPrice.trim()) params.append("maxPrice", maxPrice.trim());
+    
+    router.push(`/equipment?${params.toString()}`);
   };
 
-  return (
+
+  return (
     <div className="flex flex-col gap-0 pb-0 overflow-x-hidden pt-0 mt-0">
       {/* Hero Section */}
       <section className="relative h-[85vh] min-h-[750px] flex items-center overflow-hidden">
@@ -114,43 +124,36 @@ export default function Home() {
               className="flex flex-col gap-6 w-full max-w-6xl mt-4"
             >
               <div className="bg-black/40 backdrop-blur-3xl p-6 md:p-8 rounded-[2rem] border border-white/10 shadow-2xl">
-                <form className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                  {/* Location */}
+                <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                  {/* Search Query */}
                   <div className="md:col-span-3 flex flex-col gap-2">
-                    <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Où ?</label>
+                    <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Rechercher</label>
                     <div className="relative group">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFB800]" size={18} />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#f59e0b]" size={18} />
                       <input 
                         type="text" 
-                        placeholder="Ville, région..."
-                        className="w-full h-14 pl-12 pr-10 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#FFB800]/50 transition-all placeholder:text-gray-400"
+                        placeholder="Rechercher un matériel..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full h-14 pl-12 pr-4 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all placeholder:text-gray-400"
                       />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                        <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L6 6L11 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
-                      </div>
                     </div>
                   </div>
 
                   {/* Category */}
                   <div className="md:col-span-3 flex flex-col gap-2">
-                    <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Quoi ?</label>
+                    <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Catégorie</label>
                     <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFB800]">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="3" width="7" height="7"></rect>
-                          <rect x="14" y="3" width="7" height="7"></rect>
-                          <rect x="14" y="14" width="7" height="7"></rect>
-                          <rect x="3" y="14" width="7" height="7"></rect>
-                        </svg>
-                      </div>
-                      <select className="w-full h-14 pl-12 pr-10 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#FFB800]/50 transition-all appearance-none cursor-pointer">
-                        <option>Toutes catégories</option>
-                        <option>Gros Oeuvre</option>
-                        <option>Levage</option>
-                        <option>Béton</option>
-                        <option>Terrassement</option>
+                      <select 
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full h-14 px-4 pr-10 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="Toutes catégories">Toutes catégories</option>
+                        <option value="Earthmoving">Earthmoving (Terrassement)</option>
+                        <option value="Lifting">Lifting (Levage)</option>
+                        <option value="Concrete">Concrete (Béton)</option>
+                        <option value="Tools">Tools (Outillage)</option>
                       </select>
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                         <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -160,54 +163,37 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Date Start */}
+                  {/* Location */}
                   <div className="md:col-span-2 flex flex-col gap-2">
-                    <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Date début</label>
+                    <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Localisation</label>
                     <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFB800]">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                      </div>
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#f59e0b]" size={18} />
                       <input 
-                        type="text"
-                        onFocus={(e) => (e.target.type = "date")}
-                        onBlur={(e) => (e.target.type = "text")}
-                        placeholder="Choisir une date"
-                        className="w-full h-14 pl-12 pr-4 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#FFB800]/50 transition-all"
+                        type="text" 
+                        placeholder="Casablanca..."
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="w-full h-14 pl-12 pr-4 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all placeholder:text-gray-400"
                       />
                     </div>
                   </div>
 
-                  {/* Date End */}
+                  {/* Max Price */}
                   <div className="md:col-span-2 flex flex-col gap-2">
-                    <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Date fin</label>
-                    <div className="relative group">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#FFB800]">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                      </div>
-                      <input 
-                        type="text"
-                        onFocus={(e) => (e.target.type = "date")}
-                        onBlur={(e) => (e.target.type = "text")}
-                        placeholder="Choisir une date"
-                        className="w-full h-14 pl-12 pr-4 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#FFB800]/50 transition-all"
-                      />
-                    </div>
+                    <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Prix max</label>
+                    <input 
+                      type="number" 
+                      placeholder="DH / jour"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="w-full h-14 px-4 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all placeholder:text-gray-400 font-bold"
+                    />
                   </div>
 
                   {/* Submit */}
                   <div className="md:col-span-2">
-                    <Button className="w-full h-14 rounded-lg bg-[#FFB800] hover:bg-[#FFB800]/90 text-black font-bold flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95">
-                      <Search size={18} /> Rechercher
+                    <Button type="submit" className="w-full h-14 rounded-lg bg-[#f59e0b] hover:bg-[#f59e0b]/90 text-zinc-950 font-black flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 cursor-pointer uppercase tracking-widest text-[10px]">
+                      Rechercher &rarr;
                     </Button>
                   </div>
                 </form>
@@ -224,8 +210,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
             {/* Item 1 */}
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-[#FFB800]/10 flex items-center justify-center flex-shrink-0">
-                <ShieldCheck className="text-[#FFB800]" size={28} />
+              <div className="w-16 h-16 rounded-full bg-[#f59e0b]/10 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="text-[#f59e0b]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-gray-900 text-base">Sécurisé & Fiable</h3>
@@ -235,8 +221,8 @@ export default function Home() {
 
             {/* Item 2 */}
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-[#FFB800]/10 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="text-[#FFB800]" size={28} />
+              <div className="w-16 h-16 rounded-full bg-[#f59e0b]/10 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="text-[#f59e0b]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-gray-900 text-base">Matériel vérifié</h3>
@@ -246,8 +232,8 @@ export default function Home() {
 
             {/* Item 3 */}
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-[#FFB800]/10 flex items-center justify-center flex-shrink-0">
-                <Zap className="text-[#FFB800]" size={28} />
+              <div className="w-16 h-16 rounded-full bg-[#f59e0b]/10 flex items-center justify-center flex-shrink-0">
+                <Zap className="text-[#f59e0b]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-gray-900 text-base">Support 24/7</h3>
@@ -257,8 +243,8 @@ export default function Home() {
 
             {/* Item 4 */}
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-[#FFB800]/10 flex items-center justify-center flex-shrink-0">
-                <Users className="text-[#FFB800]" size={28} />
+              <div className="w-16 h-16 rounded-full bg-[#f59e0b]/10 flex items-center justify-center flex-shrink-0">
+                <Users className="text-[#f59e0b]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-gray-900 text-base">Des milliers d'utilisateurs</h3>
@@ -274,13 +260,13 @@ export default function Home() {
         <div className="container mx-auto px-6 max-w-7xl relative z-10">
           <div className="flex flex-col gap-8 mb-16 px-4">
             <div className="flex items-center gap-3">
-              <div className="h-1 w-8 bg-[#FFB800] rounded-full" />
-              <span className="text-[#FFB800] text-xs font-black uppercase tracking-[0.3em]">Catégories</span>
+              <div className="h-1 w-8 bg-[#f59e0b] rounded-full" />
+              <span className="text-[#f59e0b] text-xs font-black uppercase tracking-[0.3em]">Catégories</span>
             </div>
             
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-none tracking-tight">
-                NOS <span className="text-[#FFB800]">MATÉRIELS</span>
+                NOS <span className="text-[#f59e0b]">MATÉRIELS</span>
               </h2>
               <p className="text-gray-400 text-base font-medium max-w-sm">
                 Une flotte performante adaptée à tous vos projets de construction.
@@ -303,7 +289,7 @@ export default function Home() {
             {/* Left Content */}
             <div className="lg:w-1/3 flex flex-col gap-8 justify-center">
               <div className="flex flex-col gap-4">
-                <span className="text-[#FFB800] font-black uppercase tracking-[0.3em] text-xs">Matériel Lourd</span>
+                <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-xs">Matériel Lourd</span>
                 <h2 className="text-5xl font-black text-gray-900 leading-tight">
                   Les machines <br /> les plus demandées
                 </h2>
@@ -312,9 +298,9 @@ export default function Home() {
                 Découvrez notre sélection des engins de construction les plus loués par les professionnels.
               </p>
               <Link href="/equipment">
-                <Button className="h-16 px-10 rounded-2xl bg-white text-gray-900 font-black flex items-center gap-4 shadow-xl shadow-gray-200/60 transition-all duration-500 hover:shadow-2xl hover:shadow-[#FFB800]/20 hover:-translate-y-1 group/btn border border-gray-100/50">
+                <Button className="h-16 px-10 rounded-2xl bg-white text-gray-900 font-black flex items-center gap-4 shadow-xl shadow-gray-200/60 transition-all duration-500 hover:shadow-2xl hover:shadow-[#f59e0b]/20 hover:-translate-y-1 group/btn border border-gray-100/50">
                   <span className="text-base tracking-tight">Voir tous les matériels</span>
-                  <div className="w-8 h-8 rounded-xl bg-[#FFB800] flex items-center justify-center text-black shadow-lg shadow-[#FFB800]/20 transition-transform duration-500 group-hover/btn:translate-x-1 group-hover/btn:rotate-12">
+                  <div className="w-8 h-8 rounded-xl bg-[#f59e0b] flex items-center justify-center text-black shadow-lg shadow-[#f59e0b]/20 transition-transform duration-500 group-hover/btn:translate-x-1 group-hover/btn:rotate-12">
                     <ArrowRight size={18} />
                   </div>
                 </Button>
@@ -334,7 +320,7 @@ export default function Home() {
                 <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 cursor-not-allowed">
                   <ArrowRight size={20} className="rotate-180" />
                 </div>
-                <div className="w-12 h-12 rounded-full bg-[#FFB800] flex items-center justify-center text-black shadow-lg shadow-[#FFB800]/20 cursor-pointer hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-[#f59e0b] flex items-center justify-center text-black shadow-lg shadow-[#f59e0b]/20 cursor-pointer hover:scale-110 transition-transform">
                   <ArrowRight size={20} />
                 </div>
               </div>
@@ -356,8 +342,8 @@ export default function Home() {
               {/* Left Side */}
               <div className="xl:col-span-4 flex flex-col gap-6 text-center xl:text-left">
                 <div className="flex items-center gap-3 justify-center xl:justify-start">
-                  <div className="w-8 h-[2px] bg-[#FFB800]" />
-                  <span className="text-[#FFB800] font-black uppercase tracking-[0.3em] text-[10px]">L'excellence Aandilik</span>
+                  <div className="w-8 h-[2px] bg-[#f59e0b]" />
+                  <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">L'excellence Aandilik</span>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-[1.1] tracking-tight">
                   Une expérience <br /> de location <br /> <span className="text-gray-300">SANS COMPROMIS</span>
@@ -368,7 +354,7 @@ export default function Home() {
               <div className="xl:col-span-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 xl:gap-12">
                 {/* Item 1 */}
                 <div className="flex flex-col items-center xl:items-start gap-6 group">
-                  <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 transition-all duration-500 group-hover:bg-[#FFB800] group-hover:text-black group-hover:shadow-2xl group-hover:shadow-[#FFB800]/20 group-hover:-translate-y-1">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 transition-all duration-500 group-hover:bg-[#f59e0b] group-hover:text-black group-hover:shadow-2xl group-hover:shadow-[#f59e0b]/20 group-hover:-translate-y-1">
                     <ShieldCheck size={32} strokeWidth={1.5} />
                   </div>
                   <div className="flex flex-col gap-3 text-center xl:text-left">
@@ -379,7 +365,7 @@ export default function Home() {
 
                 {/* Item 2 */}
                 <div className="flex flex-col items-center xl:items-start gap-6 group">
-                  <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 transition-all duration-500 group-hover:bg-[#FFB800] group-hover:text-black group-hover:shadow-2xl group-hover:shadow-[#FFB800]/20 group-hover:-translate-y-1">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 transition-all duration-500 group-hover:bg-[#f59e0b] group-hover:text-black group-hover:shadow-2xl group-hover:shadow-[#f59e0b]/20 group-hover:-translate-y-1">
                     <Zap size={32} strokeWidth={1.5} />
                   </div>
                   <div className="flex flex-col gap-3 text-center xl:text-left">
@@ -390,7 +376,7 @@ export default function Home() {
 
                 {/* Item 3 */}
                 <div className="flex flex-col items-center xl:items-start gap-6 group">
-                  <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 transition-all duration-500 group-hover:bg-[#FFB800] group-hover:text-black group-hover:shadow-2xl group-hover:shadow-[#FFB800]/20 group-hover:-translate-y-1">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 transition-all duration-500 group-hover:bg-[#f59e0b] group-hover:text-black group-hover:shadow-2xl group-hover:shadow-[#f59e0b]/20 group-hover:-translate-y-1">
                     <CreditCard size={32} strokeWidth={1.5} />
                   </div>
                   <div className="flex flex-col gap-3 text-center xl:text-left">
@@ -401,7 +387,7 @@ export default function Home() {
 
                 {/* Item 4 */}
                 <div className="flex flex-col items-center xl:items-start gap-6 group">
-                  <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 transition-all duration-500 group-hover:bg-[#FFB800] group-hover:text-black group-hover:shadow-2xl group-hover:shadow-[#FFB800]/20 group-hover:-translate-y-1">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 transition-all duration-500 group-hover:bg-[#f59e0b] group-hover:text-black group-hover:shadow-2xl group-hover:shadow-[#f59e0b]/20 group-hover:-translate-y-1">
                     <Headphones size={32} strokeWidth={1.5} />
                   </div>
                   <div className="flex flex-col gap-3 text-center xl:text-left">
@@ -420,7 +406,7 @@ export default function Home() {
         <div className="container mx-auto px-6 max-w-[1440px]">
           <div className="flex flex-col gap-12 mb-16 px-4">
             <div className="flex flex-col gap-4">
-              <span className="text-[#FFB800] font-black uppercase tracking-[0.3em] text-[10px]">Pour tous vos projets</span>
+              <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">Pour tous vos projets</span>
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
                 Des solutions adaptées <br /> à chaque chantier
               </h2>
@@ -440,7 +426,7 @@ export default function Home() {
           </div>
 
           <div className="flex justify-center mt-20">
-            <Link href="/equipment" className="flex items-center gap-3 text-gray-400 font-bold hover:text-[#FFB800] transition-colors group">
+            <Link href="/equipment" className="flex items-center gap-3 text-gray-400 font-bold hover:text-[#f59e0b] transition-colors group">
               Voir tous les secteurs <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -506,10 +492,10 @@ export default function Home() {
               <div className="pt-4">
                 <Button 
                   onClick={() => setIsDemandModalOpen(true)}
-                  className="h-16 px-10 rounded-2xl bg-[#FFB800] text-black font-black flex items-center gap-4 shadow-2xl transition-all duration-500 hover:scale-105 group/btn"
+                  className="h-16 px-10 rounded-2xl bg-[#f59e0b] text-black font-black flex items-center gap-4 shadow-2xl transition-all duration-500 hover:scale-105 group/btn"
                 >
                   <span className="text-base tracking-tight">Publier une demande</span>
-                  <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center text-[#FFB800] transition-transform duration-500 group-hover/btn:translate-x-1 group-hover/btn:rotate-12">
+                  <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center text-[#f59e0b] transition-transform duration-500 group-hover/btn:translate-x-1 group-hover/btn:rotate-12">
                     <ArrowRight size={18} />
                   </div>
                 </Button>
@@ -523,12 +509,12 @@ export default function Home() {
         <div className="container mx-auto px-6 max-w-[1440px]">
           <div className="flex justify-between items-end mb-16 px-4">
             <div className="flex flex-col gap-4">
-              <span className="text-[#FFB800] font-black uppercase tracking-[0.3em] text-[10px]">Conseils & Actualités</span>
+              <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">Conseils & Actualités</span>
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
                 Nos derniers articles
               </h2>
             </div>
-            <Link href="/blog" className="hidden md:flex items-center gap-3 text-gray-400 font-bold hover:text-[#FFB800] transition-colors group mb-2">
+            <Link href="/blog" className="hidden md:flex items-center gap-3 text-gray-400 font-bold hover:text-[#f59e0b] transition-colors group mb-2">
               Voir tous les articles <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -540,7 +526,7 @@ export default function Home() {
           </div>
 
           <div className="flex justify-center mt-12 md:hidden">
-            <Link href="/blog" className="flex items-center gap-3 text-gray-400 font-bold hover:text-[#FFB800] transition-colors group">
+            <Link href="/blog" className="flex items-center gap-3 text-gray-400 font-bold hover:text-[#f59e0b] transition-colors group">
               Voir tous les articles <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -578,11 +564,11 @@ function CategoryCard({ item, index }: { item: any; index: number }) {
               <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">
                 {item.name}
               </h3>
-              <span className="text-[9px] font-bold text-[#FFB800] uppercase tracking-widest leading-none mt-1">
+              <span className="text-[9px] font-bold text-[#f59e0b] uppercase tracking-widest leading-none mt-1">
                 {item.count} items
               </span>
             </div>
-            <div className="w-8 h-8 rounded-xl bg-[#FFB800] flex items-center justify-center text-black shadow-lg shadow-[#FFB800]/20 transform group-hover:rotate-12 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-[#f59e0b] flex items-center justify-center text-black shadow-lg shadow-[#f59e0b]/20 transform group-hover:rotate-12 transition-transform">
               <ArrowRight size={14} />
             </div>
           </div>
@@ -677,7 +663,7 @@ function FeaturedMachineCard({ item, index }: { item: any; index: number }) {
           <div className="flex flex-col">
             <span className="text-white/60 text-[9px] font-bold uppercase tracking-widest leading-none mb-1">À partir de</span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[#FFB800] text-xl font-black">{item.pricePerDay} DH</span>
+              <span className="text-[#f59e0b] text-xl font-black">{item.pricePerDay} DH</span>
               <span className="text-white/40 text-[9px] font-bold tracking-widest">/ jour</span>
             </div>
           </div>
@@ -740,7 +726,7 @@ function BlogCard({ item, index }: { item: any; index: number }) {
         {/* Content */}
         <div className="absolute inset-0 p-8 flex flex-col justify-end gap-5">
           <div className="flex flex-col gap-4">
-            <span className="inline-flex w-fit px-3 py-1 rounded-lg bg-[#FFB800] text-black text-[9px] font-black tracking-widest uppercase shadow-lg shadow-[#FFB800]/20">
+            <span className="inline-flex w-fit px-3 py-1 rounded-lg bg-[#f59e0b] text-black text-[9px] font-black tracking-widest uppercase shadow-lg shadow-[#f59e0b]/20">
               {item.category}
             </span>
             <span className="text-white/40 text-[10px] font-bold tracking-widest uppercase">
@@ -749,7 +735,7 @@ function BlogCard({ item, index }: { item: any; index: number }) {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h3 className="text-xl font-bold text-white leading-tight tracking-tight group-hover:text-[#FFB800] transition-colors duration-500">
+            <h3 className="text-xl font-bold text-white leading-tight tracking-tight group-hover:text-[#f59e0b] transition-colors duration-500">
               {item.title}
             </h3>
             <p className="text-white/50 text-xs font-medium leading-relaxed line-clamp-2">

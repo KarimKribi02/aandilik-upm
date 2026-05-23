@@ -18,6 +18,7 @@ import { Partner } from './partners/entities/partner.entity';
 import { Expert } from './experts/entities/expert.entity';
 import { DemandsModule } from './demands/demands.module';
 import { Demand } from './demands/entities/demand.entity';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { Demand } from './demands/entities/demand.entity';
     PartnersModule,
     ExpertsModule,
     DemandsModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

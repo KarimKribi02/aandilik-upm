@@ -1,22 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  /* Site Canvas & Typography */
-  --color-background: #fbf9f8;
-  --color-foreground: #1b1c1c;
+  /* Site Canvas & Typography (Modern Construction Black & Gold) */
+  --color-background: #fafafa; /* bg-zinc-50 / off-white */
+  --color-foreground: #18181b; /* text-zinc-900 / dark charcoal */
 
-  /* Industrial Color Palette (Modern BTP) */
-  --color-primary-brown: #7a4100;
-  --color-primary: #f59e0b; /* Sophisticated Amber/Orange */
-  --color-secondary: #334155; /* Refined Slate Blue */
-  --color-tertiary: #075985; /* Deep Engineering Blue */
+  /* Construction Yellow & Slate Palette */
+  --color-primary: #f59e0b; /* Logo Yellow / Amber 500 */
+  --color-primary-dark: #d97706; /* Amber 600 */
+  --color-accent: #f59e0b; /* Yellow Accent */
+  --color-accent-dark: #d97706;
+  --color-secondary: #71717a; /* Zinc 500 / Secondary descriptions */
+  --color-tertiary: #27272a; /* Zinc 800 / Dark accent elements */
+  --color-primary-brown: #f59e0b; /* Fallback for legacy class usages */
   
-  /* Tonal Surface Architecture (The Digital Architect) */
-  --color-surface: #fafaf9;
-  --color-surface-low: #f5f5f4;
-  --color-surface-container: #e7e5e4;
-  --color-surface-high: #d6d3d1;
-  --color-surface-highest: #a8a29e;
+  /* Tonal Surface Architecture */
+  --color-surface: #f4f4f5; /* Zinc 100 */
+  --color-surface-low: #fafafa; /* Zinc 50 */
+  --color-surface-container: #e4e4e7; /* Zinc 200 */
+  --color-surface-high: #d4d4d8; /* Zinc 300 */
+  --color-surface-highest: #a1a1aa; /* Zinc 400 */
   --color-surface-lowest: #ffffff;
 
   /* Elevation & Borders */
@@ -32,8 +35,8 @@
 
 @layer base {
   :root {
-    --background: #fbf9f8;
-    --foreground: #1b1c1c;
+    --background: #fafafa;
+    --foreground: #18181b;
   }
 
   body {
@@ -60,11 +63,15 @@
   }
 
   .primary-gradient {
-    background: linear-gradient(135deg, #7a4100 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  }
+
+  .accent-gradient {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   }
 
   .text-gradient {
-    background: linear-gradient(to right, #ffffff, #a8a29e);
+    background: linear-gradient(to right, #18181b, #71717a);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -72,11 +79,11 @@
 
   /* Ambient Occlusion (Premium Glow) */
   .premium-shadow {
-    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
   }
 
   .hero-mask {
-    background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
+    background: linear-gradient(to bottom, rgba(24, 24, 27, 0.3) 0%, rgba(24, 24, 27, 0.8) 100%);
   }
 
   .animate-marquee {

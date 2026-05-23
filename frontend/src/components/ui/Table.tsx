@@ -39,8 +39,12 @@ export const TableRow = ({ children, className }: { children: ReactNode; classNa
   </tr>
 );
 
-export const TableCell = ({ children, className }: { children: ReactNode; className?: string }) => (
-  <td className={cn("px-6 py-4 text-sm align-middle", className)}>
+export const TableCell = ({ 
+  children, 
+  className,
+  ...props 
+}: React.TdHTMLAttributes<HTMLTableCellElement> & { children: ReactNode }) => (
+  <td className={cn("px-6 py-4 text-sm align-middle", className)} {...props}>
     {children}
   </td>
 );

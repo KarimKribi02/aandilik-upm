@@ -182,7 +182,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setCurrentUser(null);
         }
       } else {
-        setEquipment([]);
+        // No token: load public equipment listing for unauthenticated visitors
+        try {
+          const publicEquipment = await apiFetch("/materiel");
+          setEquipment(publicEquipment.map(transformEquipment));
+        } catch (err) {
+          console.error("Failed to fetch public equipment", err);
+          setEquipment([]);
+        }
         setUsers([]);
         setReservations([]);
         setArticles([]);
