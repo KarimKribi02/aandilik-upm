@@ -2,6 +2,10 @@ import { IsString, IsEmail, IsDateString, IsEnum, IsOptional } from 'class-valid
 import { ReservationStatus } from '../entities/reservation.entity';
 
 export class CreateReservationDto {
+  @IsOptional()
+  @IsString()
+  tracking_code?: string;
+
   @IsString()
   client_nom: string;
 

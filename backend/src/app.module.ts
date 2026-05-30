@@ -19,6 +19,9 @@ import { Expert } from './experts/entities/expert.entity';
 import { DemandsModule } from './demands/demands.module';
 import { Demand } from './demands/entities/demand.entity';
 import { SeedModule } from './seed/seed.module';
+import { CategoriesModule } from './categories/categories.module';
+import { Category } from './categories/entities/category.entity';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -30,7 +33,7 @@ import { SeedModule } from './seed/seed.module';
       username: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'aandilik',
-      entities: [User, Materiel, Reservation, Article, Partner, Expert, Demand],
+      entities: [User, Materiel, Reservation, Article, Partner, Expert, Demand, Category],
       synchronize: true,
     }),
     UsersModule,
@@ -42,6 +45,8 @@ import { SeedModule } from './seed/seed.module';
     ExpertsModule,
     DemandsModule,
     SeedModule,
+    CategoriesModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

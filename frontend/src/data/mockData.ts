@@ -1,5 +1,5 @@
 export type EquipmentCategory = "Earthmoving" | "Lifting" | "Concrete" | "Materials" | "Tools";
-export type ReservationStatus = "Pending" | "Confirmed" | "Cancelled" | "Completed" | "Rejected";
+export type ReservationStatus = "Pending" | "Confirmed" | "Cancelled" | "Completed" | "Rejected" | "In Progress";
 export type UserRole = "Owner" | "Admin";
 
 export interface Equipment {
@@ -36,6 +36,9 @@ export interface Reservation {
   status: ReservationStatus;
   totalPrice: number;
   createdAt: string;
+  client_nom?: string;
+  client_telephone?: string;
+  client_email?: string;
 }
 
 

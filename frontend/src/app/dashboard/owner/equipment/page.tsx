@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Plus, Edit3, Trash2, Eye, Hammer, Construction } from "lucide-react";
 
 export default function OwnerEquipment() {
-  const { equipment, currentUser, addEquipment, updateEquipment, deleteEquipment } = useData();
+  const { equipment, currentUser, addEquipment, updateEquipment, deleteEquipment, categories } = useData();
   const { showToast } = useToast();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -21,7 +21,7 @@ export default function OwnerEquipment() {
   // Form State
   const [formData, setFormData] = useState({
     name: "",
-    category: "Earthmoving",
+    category: categories[0]?.name || "Earthmoving",
     pricePerDay: "",
     location: "",
     description: "",
@@ -64,7 +64,7 @@ export default function OwnerEquipment() {
       setIsAddModalOpen(false);
       setFormData({
         name: "",
-        category: "Earthmoving",
+        category: categories[0]?.name || "Earthmoving",
         pricePerDay: "",
         location: "",
         description: "",
@@ -225,13 +225,7 @@ export default function OwnerEquipment() {
           <div className="grid grid-cols-2 gap-4">
             <Select 
               label="Category" 
-              options={[
-                { value: "Earthmoving", label: "Earthmoving" },
-                { value: "Lifting", label: "Lifting" },
-                { value: "Concrete", label: "Concrete" },
-                { value: "Materials", label: "Materials" },
-                { value: "Tools", label: "Tools" }
-              ]} 
+              options={categories.map(cat => ({ value: cat.name, label: cat.name }))} 
               value={formData.category}
               onChange={(e: any) => setFormData({...formData, category: e.target.value})}
             />
@@ -306,13 +300,7 @@ export default function OwnerEquipment() {
           <div className="grid grid-cols-2 gap-4">
             <Select 
               label="Category" 
-              options={[
-                { value: "Earthmoving", label: "Earthmoving" },
-                { value: "Lifting", label: "Lifting" },
-                { value: "Concrete", label: "Concrete" },
-                { value: "Materials", label: "Materials" },
-                { value: "Tools", label: "Tools" }
-              ]} 
+              options={categories.map(cat => ({ value: cat.name, label: cat.name }))} 
               value={formData.category}
               onChange={(e: any) => setFormData({...formData, category: e.target.value})}
             />

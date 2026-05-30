@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, UnauthorizedExcepti
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
+import { MailService } from '../mail/mail.service';
 import { Materiel } from '../materiel/entities/materiel.entity';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 
@@ -14,6 +15,7 @@ export class ReservationsService {
     private reservationRepository: Repository<Reservation>,
     @InjectRepository(Materiel)
     private materielRepository: Repository<Materiel>,
+    private mailService: MailService,
   ) {}
 
   async create(reservationData: CreateReservationDto, materielId: number, client: any): Promise<Reservation> {
@@ -41,6 +43,7 @@ export class ReservationsService {
     const reservation = this.reservationRepository.create({
       ...reservationData,
       materiel,
+      tracking_code: reservationData.tracking_code,
       client: client || null,
       prix_total,
       commission,
@@ -71,7 +74,7 @@ export class ReservationsService {
   async findOne(id: number): Promise<Reservation> {
     const reservation = await this.reservationRepository.findOne({
       where: { id },
-      relations: ['materiel', 'materiel.proprietaire'],
+      relations: ['materiel', 'materiel.proprietaire', 'client'],
     });
     if (!reservation) {
       throw new NotFoundException(`Reservation with ID ${id} not found`);
@@ -82,13 +85,26 @@ export class ReservationsService {
   async updateStatus(id: number, statut: ReservationStatus, ownerId: number): Promise<Reservation> {
     const reservation = await this.findOne(id);
     
-    // Check if the current user is the owner of the equipment
-    // if (reservation.materiel.proprietaire.id !== ownerId) {
-    //   throw new UnauthorizedException('You do not own the equipment for this reservation');
-    // }
-
     reservation.statut = statut;
-    return this.reservationRepository.save(reservation);
+    const saved = await this.reservationRepository.save(reservation);
+
+    // Send Notification Email
+    try {
+      const email = reservation.client_email || reservation.client?.email;
+      if (email) {
+        await this.mailService.sendStatusUpdate(
+          email,
+          reservation.client_nom || reservation.client?.nom || 'Client',
+          statut,
+          reservation.materiel.nom_equipement,
+          reservation.tracking_code
+        );
+      }
+    } catch (err) {
+      console.error('Failed to send status update email:', err.message);
+    }
+
+    return saved;
   }
 
   async getGlobalStats() {

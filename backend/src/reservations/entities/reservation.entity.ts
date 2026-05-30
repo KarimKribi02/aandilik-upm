@@ -16,6 +16,9 @@ export class Reservation {
   id: number;
 
   @Column({ nullable: true })
+  tracking_code: string;
+
+  @Column({ nullable: true })
   client_nom: string;
 
   @Column({ nullable: true })

@@ -16,7 +16,6 @@ import {
   Wrench, 
   Zap, 
   ArrowRight,
-  Info,
   CheckCircle2,
   Activity,
   Gauge,
@@ -24,10 +23,14 @@ import {
   Shield,
   User,
   Phone,
-  Mail
+  Mail,
+  Copy,
+  Check,
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { generateTrackingCode, saveTrackedReservation, buildInitialHistory } from "@/lib/tracking";
 
 export default function DetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -39,6 +42,8 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
   const [fetching, setFetching] = useState(true);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [trackingCode, setTrackingCode] = useState("");
+  const [copied, setCopied] = useState(false);
 
   // Guest inputs
   const [clientNom, setClientNom] = useState("");
@@ -120,17 +125,62 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
         materielId: Number(id),
       };
 
+      // Save to database for tracking
       await apiFetch("/reservations", {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
+      // Generate tracking code and persist to localStorage
+      const code = generateTrackingCode();
+      setTrackingCode(code);
+      saveTrackedReservation({
+        trackingCode: code,
+        reservationId: id,
+        equipmentName: equipment.nom_equipement,
+        equipmentImage: equipment.images || "",
+        clientNom,
+        clientEmail,
+        clientTelephone,
+        startDate,
+        endDate,
+        totalPrice,
+        status: "Pending",
+        createdAt: new Date().toISOString(),
+        history: buildInitialHistory("Pending", new Date().toISOString()),
+      });
+
+      // Format WhatsApp Message with tracking code
+      const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "212773662487";
+      const message = `Bonjour Aandilik, je souhaite réserver l'équipement suivant :
+
+🏗️ *Matériel* : ${equipment.nom_equipement}
+👤 *Client* : ${clientNom}
+📞 *Téléphone* : ${clientTelephone}
+📧 *Email* : ${clientEmail}
+📅 *Dates* : du ${startDate} au ${endDate}
+⏳ *Durée* : ${days} jours
+💰 *Prix Total estimé* : ${totalPrice} MAD
+🔍 *Code de suivi* : ${code}
+
+Merci de me recontacter pour finaliser la location.`;
+
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+      window.open(whatsappUrl, "_blank");
+      
       setIsSuccessModalOpen(true);
     } catch (err: any) {
       showToast(err.message || "Erreur lors de la réservation", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(trackingCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (fetching) {
@@ -461,24 +511,29 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      {/* Success Modal */}
+      {/* Success Modal with Tracking Code */}
       <Modal
         isOpen={isSuccessModalOpen}
         onClose={() => {
           setIsSuccessModalOpen(false);
           router.push("/");
         }}
-        title="Réservation Enregistrée"
+        title="Réservation Confirmée"
         footer={(
-          <Button 
-            className="w-full h-14 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-950" 
-            onClick={() => {
-              setIsSuccessModalOpen(false);
-              router.push("/");
-            }}
-          >
-            Retourner à l&apos;accueil <ArrowRight className="ml-2" size={14} />
-          </Button>
+          <div className="flex flex-col gap-3 w-full">
+            <Link href={`/track?code=${trackingCode}`} onClick={() => setIsSuccessModalOpen(false)}>
+              <Button className="w-full h-14 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-950">
+                Suivre ma réservation <ExternalLink className="ml-2" size={14} />
+              </Button>
+            </Link>
+            <Button 
+              variant="secondary"
+              className="w-full h-11 rounded-xl text-xs font-black uppercase tracking-widest" 
+              onClick={() => { setIsSuccessModalOpen(false); router.push("/"); }}
+            >
+              Retourner à l&apos;accueil
+            </Button>
+          </div>
         )}
       >
         <div className="flex flex-col items-center text-center gap-6 py-4">
@@ -488,7 +543,31 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
           <div className="flex flex-col gap-2">
             <h4 className="text-xl font-black text-slate-900 tracking-tight">Demande Enregistrée !</h4>
             <p className="text-slate-500 text-xs font-medium leading-relaxed px-4">
-              Votre demande de location a été envoyée au propriétaire de l&apos;équipement. L&apos;équipe AANDILIK effectue la validation technique. Un récapitulatif a été envoyé à l&apos;adresse <strong>{clientEmail}</strong>.
+              Un code de suivi unique a été généré pour votre réservation. Conservez-le pour suivre l&apos;état de votre location en temps réel.
+            </p>
+          </div>
+
+          {/* Tracking Code Display */}
+          <div className="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 flex flex-col items-center gap-3">
+            <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Votre Code de Suivi</div>
+            <div className="text-2xl font-black tracking-[0.15em] text-slate-900 font-mono">{trackingCode}</div>
+            <button
+              onClick={handleCopyCode}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${
+                copied 
+                  ? "bg-green-500 text-white" 
+                  : "bg-white border border-slate-200 text-slate-700 hover:border-primary hover:text-primary"
+              }`}
+            >
+              {copied ? <><Check size={12} /> Copié !</> : <><Copy size={12} /> Copier le code</>}
+            </button>
+          </div>
+
+          {/* Simulated email */}
+          <div className="w-full bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-3 text-left">
+            <Mail size={14} className="text-blue-500 mt-0.5 shrink-0" />
+            <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
+              Un email contenant ce code de suivi a été envoyé (simulé) à <strong>{clientEmail}</strong>. Utilisez ce code sur la page <strong>/track</strong> pour suivre l&apos;état de votre réservation.
             </p>
           </div>
         </div>

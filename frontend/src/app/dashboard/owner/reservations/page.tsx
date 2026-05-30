@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, TableRow, TableCell } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useData } from "@/context/DataProvider";
 import { useToast } from "@/components/ui/Toast";
-import { Clock, CheckCircle, XCircle, MoreVertical, PackageSearch } from "lucide-react";
+import { Clock, CheckCircle, XCircle, MoreVertical, PackageSearch, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { getAllTrackedReservations } from "@/lib/tracking";
 
 export default function OwnerReservations() {
   const { reservations, equipment, users, currentUser, updateReservationStatus } = useData();
@@ -49,10 +51,17 @@ export default function OwnerReservations() {
           </div>
 
           {ownerReservations.length > 0 ? (
-            <Table headers={["Asset", "Renter", "Timeline", "Revenue", "Actions"]}>
+            <Table headers={["Asset", "Track ID", "Renter", "Timeline", "Revenue", "Actions"]}>
               {ownerReservations.map((res) => {
                 const eq = equipment.find(e => e.id === res.equipmentId);
                 const renter = users.find(u => u.id === res.renterId);
+
+                // Try to find tracking code from localStorage
+                const allTracked = getAllTrackedReservations();
+                const tracked = Object.values(allTracked).find(t => 
+                  t.clientEmail === res.client_email || t.clientNom === renter?.name
+                );
+
                 return (
                   <TableRow key={res.id}>
                     <TableCell>
@@ -62,6 +71,18 @@ export default function OwnerReservations() {
                         </div>
                         <div className="font-bold text-sm tracking-tight">{eq?.name}</div>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {tracked ? (
+                        <Link href={`/track?code=${tracked.trackingCode}`} className="group">
+                          <div className="font-mono text-[10px] font-black text-slate-900 bg-slate-100 px-2 py-1 rounded border border-slate-200 group-hover:border-primary group-hover:text-primary transition-all flex items-center gap-1.5 w-fit">
+                            {tracked.trackingCode}
+                            <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className="text-[10px] font-bold text-slate-300 italic">No Track Code</div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="font-bold text-sm">{renter?.name}</div>
@@ -78,36 +99,41 @@ export default function OwnerReservations() {
                     <TableCell>
                       <div className="flex gap-2">
                         {res.status === "Pending" && (
-                          <>
+                          <div className="flex gap-1.5">
                             <Button 
-                              variant="secondary" 
+                              variant="primary" 
                               size="sm" 
-                              className="bg-green-50 text-green-700 hover:bg-green-100 p-2"
+                              className="h-8 px-3 text-[10px] bg-green-500 hover:bg-green-600 border-none flex-1"
                               onClick={() => handleStatusChange(res.id, "Confirmed")}
                             >
-                              <CheckCircle size={18} />
+                              Accepter
                             </Button>
                             <Button 
                               variant="secondary" 
                               size="sm" 
-                              className="bg-red-50 text-red-700 hover:bg-red-100 p-2"
+                              className="h-8 px-3 text-[10px] bg-red-50 text-red-600 border-red-100 flex-1"
                               onClick={() => handleStatusChange(res.id, "Rejected")}
                             >
-                              <XCircle size={18} />
+                              Rejeter
                             </Button>
-                          </>
+                          </div>
                         )}
                         {res.status === "Confirmed" && (
                           <Button 
-                            variant="secondary" 
+                            variant="primary" 
                             size="sm" 
-                            className="text-xs font-bold"
+                            className="h-8 px-4 text-[10px] bg-blue-500 hover:bg-blue-600 border-none w-full"
                             onClick={() => handleStatusChange(res.id, "Completed")}
                           >
-                            Mark Completed
+                            Clôturer
                           </Button>
                         )}
-                        <Button variant="tertiary" size="sm" className="p-2"><MoreVertical size={18} /></Button>
+                        {res.status === "Completed" && (
+                          <div className="text-[10px] font-bold text-slate-400 italic text-center w-full">
+                            Terminé
+                          </div>
+                        )}
+                        <Button variant="tertiary" size="sm" className="hidden"><MoreVertical size={18} /></Button>
                       </div>
                     </TableCell>
                   </TableRow>

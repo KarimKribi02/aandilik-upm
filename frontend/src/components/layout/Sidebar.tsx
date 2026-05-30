@@ -16,6 +16,7 @@ import {
   Handshake,
   BookOpen,
   UserCheck,
+  Grid,
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const navItems: Record<Role, { href: string; label: string; icon: any }[]> = {
   admin: [
     { href: "/dashboard/admin", label: "Operations", icon: LayoutDashboard },
     { href: "/dashboard/admin/users", label: "User Control", icon: Users },
+    { href: "/dashboard/admin/categories", label: "Categories", icon: Grid },
     { href: "/dashboard/admin/equipment", label: "Fleet Validation", icon: ShieldCheck },
     { href: "/dashboard/admin/reservations", label: "Global Monitoring", icon: History },
     { href: "/dashboard/admin/blog", label: "Blog Content", icon: BookOpen },

@@ -27,22 +27,18 @@ import {
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
-const sidebarCategories = [
-  { key: "Tous", label: "Tous les matériels" },
-  { key: "Earthmoving", label: "Terrassement" },
-  { key: "Lifting", label: "Levage" },
-  { key: "Concrete", label: "Béton" },
-  { key: "Tools", label: "Outillage" },
-];
-
 export default function ListingPage() {
-  const { equipment } = useData();
+  const { equipment, categories } = useData();
+  const dynamicSidebarCategories = [
+    { key: "Tous", label: "Tous les matériels" },
+    ...categories.map(cat => ({ key: cat.name, label: cat.name }))
+  ];
   const [activeCategory, setActiveCategory] = useState("Tous");
   const [activeCity, setActiveCity] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [maxPower, setMaxPower] = useState(500);
-  const [maxCapacity, setMaxCapacity] = useState(5);
-  const [maxPrice, setMaxPrice] = useState(10000);
+  const [maxPower, setMaxPower] = useState(2000);
+  const [maxCapacity, setMaxCapacity] = useState(100);
+  const [maxPrice, setMaxPrice] = useState(50000);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [isDemandModalOpen, setIsDemandModalOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -109,9 +105,9 @@ export default function ListingPage() {
     setActiveCategory("Tous");
     setActiveCity("");
     setSearchQuery("");
-    setMaxPower(500);
-    setMaxCapacity(5);
-    setMaxPrice(10000);
+    setMaxPower(2000);
+    setMaxCapacity(100);
+    setMaxPrice(50000);
     setOnlyAvailable(false);
   };
 
@@ -123,7 +119,7 @@ export default function ListingPage() {
           <span>Catégories</span>
         </h3>
         <div className="flex flex-col gap-2">
-          {sidebarCategories.map(cat => {
+          {dynamicSidebarCategories.map(cat => {
             const isActive = activeCategory === cat.key;
             return (
               <button 
@@ -155,7 +151,7 @@ export default function ListingPage() {
           <input 
             type="range"
             min="100"
-            max="10000"
+            max="50000"
             step="100"
             value={maxPrice}
             onChange={e => setMaxPrice(Number(e.target.value))}
@@ -163,7 +159,7 @@ export default function ListingPage() {
           />
           <div className="flex justify-between text-[9px] font-black text-slate-400 mt-1 uppercase">
             <span>100 DH</span>
-            <span>10,000 DH</span>
+            <span>50,000 DH</span>
           </div>
         </div>
       </div>
@@ -178,7 +174,7 @@ export default function ListingPage() {
           <input 
             type="range"
             min="20"
-            max="500"
+            max="2000"
             step="10"
             value={maxPower}
             onChange={e => setMaxPower(Number(e.target.value))}
@@ -186,7 +182,7 @@ export default function ListingPage() {
           />
           <div className="flex justify-between text-[9px] font-black text-slate-400 mt-1 uppercase">
             <span>20 kW</span>
-            <span>500 kW</span>
+            <span>2000 kW</span>
           </div>
         </div>
       </div>
@@ -201,7 +197,7 @@ export default function ListingPage() {
           <input 
             type="range"
             min="0.5"
-            max="10"
+            max="100"
             step="0.5"
             value={maxCapacity}
             onChange={e => setMaxCapacity(Number(e.target.value))}
@@ -209,7 +205,7 @@ export default function ListingPage() {
           />
           <div className="flex justify-between text-[9px] font-black text-slate-400 mt-1 uppercase">
             <span>0.5 m³</span>
-            <span>10 m³</span>
+            <span>100 m³</span>
           </div>
         </div>
       </div>

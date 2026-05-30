@@ -12,12 +12,20 @@ import {
   Partner
 } from "@/data/mockData";
 import { apiFetch } from "@/lib/api";
+import { getAllTrackedReservations, updateTrackedStatus } from "@/lib/tracking";
 
 export interface Expert {
   id: string;
   name: string;
   role: string;
   image: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  image: string;
+  description: string;
 }
 
 interface DataContextType {
@@ -27,6 +35,7 @@ interface DataContextType {
   articles: Article[];
   partners: Partner[];
   experts: Expert[];
+  categories: Category[];
   currentUser: User | null;
   addEquipment: (item: Omit<Equipment, "id">) => Promise<void>;
   updateEquipment: (id: string, item: Partial<Equipment>) => Promise<void>;
@@ -45,6 +54,9 @@ interface DataContextType {
   register: (name: string, email: string, role: string, password?: string) => Promise<void>;
   logout: () => void;
   addDemand: (data: any) => Promise<void>;
+  addCategory: (data: Omit<Category, "id">) => Promise<void>;
+  updateCategory: (id: string, data: Partial<Category>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -120,7 +132,10 @@ const transformReservation = (item: any): Reservation => ({
   endDate: new Date(item.date_fin).toISOString().split('T')[0],
   status: mapStatus(item.statut),
   totalPrice: item.prix_total,
-  createdAt: new Date().toISOString() // Backend lacks createdAt currently
+  createdAt: new Date().toISOString(), // Backend lacks createdAt currently
+  client_nom: item.client_nom,
+  client_telephone: item.client_telephone,
+  client_email: item.client_email
 });
 
 const transformArticle = (item: any): Article => ({
@@ -139,6 +154,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [articles, setArticles] = useState<Article[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [experts, setExperts] = useState<Expert[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -157,20 +173,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           setCurrentUser(user);
 
-          if (user.role === 'Owner') {
-            const ownedEquipment = await apiFetch("/materiel/owner");
-            setEquipment(ownedEquipment.map(transformEquipment));
-            const ownedReservations = await apiFetch("/reservations/owner");
-            setReservations(ownedReservations.map(transformReservation));
-          } else if (user.role === 'Admin') {
-            const allEquipment = await apiFetch("/materiel");
-            setEquipment(allEquipment.map(transformEquipment));
-            const allReservations = await apiFetch("/reservations");
-            setReservations(allReservations.map(transformReservation));
+          // Load all equipment for marketplace + dashboard filtering
+          const allEquipment = await apiFetch("/materiel");
+          setEquipment(allEquipment.map(transformEquipment));
+
+          if (user.role === 'Admin') {
             const allUsers = await apiFetch("/users");
             setUsers(allUsers.map((u: any) => ({
               id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role)
             })));
+            const allReservations = await apiFetch("/reservations");
+            setReservations(allReservations.map(transformReservation));
+          } else if (user.role === 'Owner') {
+            const myReservations = await apiFetch("/reservations/owner");
+            setReservations(myReservations.map(transformReservation));
+          } else {
+            const myReservations = await apiFetch("/reservations/me");
+            setReservations(myReservations.map(transformReservation));
           }
         } catch (err) {
           console.error("Failed to restore session", err);
@@ -196,24 +215,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCurrentUser(null);
       }
 
-      // Always load articles & partners publicly
+      // Always load articles, partners & categories publicly
       try {
-        const blogData = await apiFetch("/blog");
-        setArticles(blogData.map(transformArticle));
-      } catch (err) {
-        console.error("Failed to fetch articles", err);
-      }
-
-      try {
-        const partnersData = await apiFetch("/partners");
-        setPartners(partnersData.map((p: any): Partner => ({
+        const [publicArticles, publicPartners, publicCategories] = await Promise.all([
+          apiFetch("/blog"),
+          apiFetch("/partners"),
+          apiFetch("/categories")
+        ]);
+        setArticles(publicArticles.map(transformArticle));
+        setPartners(publicPartners.map((p: any): Partner => ({
           id: p.id.toString(),
           name: p.name,
           logo: p.logo || "",
           createdAt: p.createdAt || ""
         })));
+        setCategories(publicCategories.map((c: any) => ({
+          ...c,
+          id: c.id.toString()
+        })));
       } catch (err) {
-        console.error("Failed to fetch partners", err);
+        console.error("Failed to fetch shared public data", err);
       }
 
       try {
@@ -234,7 +255,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initApp();
   }, []);
 
-  const login = async (email: string, password: string = "password123") => {
+  const login = async (email: string, password: string) => {
     try {
       const data = await apiFetch("/auth/login", {
         method: "POST",
@@ -387,10 +408,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ statut: mapStatus(status) })
       });
       
-      if (currentUser?.role === 'Owner') {
-        const ownedReservations = await apiFetch("/reservations/owner");
-        setReservations(ownedReservations.map(transformReservation));
+      // Update local tracking state if it exists
+      const resData = reservations.find(r => r.id === id);
+      if (resData) {
+        const allTracked = getAllTrackedReservations();
+        const tracked = Object.values(allTracked).find(t => 
+          t.clientEmail === resData.renterId || t.startDate === resData.startDate
+        );
+        if (tracked) {
+          updateTrackedStatus(tracked.trackingCode, status as any);
+        }
       }
+
+      const allRes = await apiFetch("/reservations");
+      setReservations(allRes.map(transformReservation));
     } catch (err) {
       console.error("Failed to update reservation status", err);
       throw err;
@@ -524,6 +555,44 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const addCategory = async (data: Omit<Category, "id">) => {
+    try {
+      const newCat = await apiFetch("/categories", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      setCategories(prev => [...prev, { ...newCat, id: newCat.id.toString() }]);
+    } catch (err) {
+      console.error("Failed to add category", err);
+      throw err;
+    }
+  };
+
+  const updateCategory = async (id: string, data: Partial<Category>) => {
+    try {
+      const updatedCat = await apiFetch(`/categories/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data)
+      });
+      setCategories(prev => prev.map(cat => cat.id === id ? { ...updatedCat, id: updatedCat.id.toString() } : cat));
+    } catch (err) {
+      console.error("Failed to update category", err);
+      throw err;
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    try {
+      await apiFetch(`/categories/${id}`, {
+        method: "DELETE"
+      });
+      setCategories(prev => prev.filter(cat => cat.id !== id));
+    } catch (err) {
+      console.error("Failed to delete category", err);
+      throw err;
+    }
+  };
+
 
   return (
     <DataContext.Provider value={{
@@ -533,6 +602,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       articles,
       partners,
       experts,
+      categories,
       currentUser,
       addEquipment,
       updateEquipment,
@@ -550,7 +620,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       register,
       logout,
-      addDemand
+      addDemand,
+      addCategory,
+      updateCategory,
+      deleteCategory
     }}>
       {children}
     </DataContext.Provider>

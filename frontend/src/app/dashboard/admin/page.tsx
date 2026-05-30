@@ -1,20 +1,40 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useData } from "@/context/DataProvider";
 import { Card } from "@/components/ui/Card";
 import { Table, TableRow, TableCell } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 import { 
   Users, 
   Construction, 
   Activity, 
   ShieldCheck,
-  MoreVertical
+  MoreVertical,
+  Check,
+  X,
+  Trash2,
+  ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminOverview() {
-  const { users, equipment } = useData();
+  const { users, equipment, updateEquipment, deleteEquipment } = useData();
+  const { showToast } = useToast();
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const stats = [
     { label: "Total Users", value: (users || []).length.toString(), icon: Users, color: "text-purple-500" },
@@ -24,6 +44,23 @@ export default function AdminOverview() {
   ];
 
   const recentEquipment = (equipment || []).slice(-3).reverse();
+
+  const handleAction = async (id: string, action: 'active' | 'rejected' | 'delete') => {
+    try {
+      if (action === 'delete') {
+        if (confirm("Are you sure you want to delete this equipment?")) {
+          await deleteEquipment(id);
+          showToast("Equipment deleted permanently.", "error");
+        }
+      } else {
+        await updateEquipment(id, { status: action });
+        showToast(action === 'active' ? "Equipment approved." : "Equipment rejected.", "success");
+      }
+    } catch (err: any) {
+      showToast("Operation failed: " + err.message, "error");
+    }
+    setOpenMenuId(null);
+  };
 
   return (
     <div className="flex flex-col gap-12">
@@ -70,7 +107,8 @@ export default function AdminOverview() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="text-sm font-medium">Owner ID: {item.ownerId}</div>
+                  <div className="text-xs font-bold text-slate-500">ID: {item.ownerId}</div>
+                  <div className="text-[9px] text-secondary uppercase tracking-tighter">Verified Owner</div>
                 </TableCell>
                 <TableCell>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${
@@ -81,7 +119,53 @@ export default function AdminOverview() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <Button variant="tertiary" size="sm" className="p-2"><MoreVertical size={18} /></Button>
+                  <div className="relative">
+                    <Button 
+                      variant="tertiary" 
+                      size="sm" 
+                      className={`p-2 transition-colors ${openMenuId === item.id ? 'bg-slate-100' : ''}`}
+                      onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)}
+                    >
+                      <MoreVertical size={18} />
+                    </Button>
+
+                    {openMenuId === item.id && (
+                      <div 
+                        ref={menuRef}
+                        className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 z-50 p-1 flex flex-col gap-1 overflow-hidden animate-in fade-in slide-in-from-top-1"
+                      >
+                        {item.status === 'pending' && (
+                          <button 
+                            onClick={() => handleAction(item.id, 'active')}
+                            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          >
+                            <Check size={14} /> Approve Machinery
+                          </button>
+                        )}
+                        {item.status === 'active' && (
+                          <button 
+                            onClick={() => handleAction(item.id, 'rejected')}
+                            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                          >
+                            <X size={14} /> Suspend Listing
+                          </button>
+                        )}
+                        <Link 
+                          href={`/equipment/${item.id}`}
+                          className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                          <ExternalLink size={14} /> View Details
+                        </Link>
+                        <hr className="border-slate-50 my-1" />
+                        <button 
+                          onClick={() => handleAction(item.id, 'delete')}
+                          className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={14} /> Delete Permanent
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

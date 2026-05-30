@@ -29,7 +29,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { mockPartners } from "@/data/mockData";
 
 export default function Home() {
-  const { equipment, articles, partners } = useData();
+  const { equipment, articles, partners, categories } = useData();
   
   // Get latest 3 articles
   const latestArticles = articles.length > 0 
@@ -46,14 +46,19 @@ export default function Home() {
 
   const featured = (equipment || []).filter(e => e.status === "active").slice(0, 3);
 
-  const categories = [
-    { name: "Terrassement", count: 124, img: "/terrassement_category_1779494862306.png" },
-    { name: "Levage", count: 45, img: "/levage_category_1779494969604.png" },
-    { name: "Gros Œuvre", count: 88, img: "https://images.pexels.com/photos/159306/construction-site-build-construction-work-159306.jpeg?auto=compress&cs=tinysrgb&w=800" },
-    { name: "Béton", count: 32, img: "https://images.pexels.com/photos/699252/pexels-photo-699252.jpeg?auto=compress&cs=tinysrgb&w=800" },
-    { name: "Manutention", count: 56, img: "https://images.pexels.com/photos/2209529/pexels-photo-2209529.jpeg?auto=compress&cs=tinysrgb&w=800" },
-    { name: "Énergie", count: 21, img: "https://images.pexels.com/photos/175039/pexels-photo-175039.jpeg?auto=compress&cs=tinysrgb&w=800" },
-  ];
+  const getCategoryCount = (key: string) => {
+    return (equipment || []).filter(e => 
+      e.status === "active" && 
+      (e.category || "").toLowerCase() === key.toLowerCase()
+    ).length;
+  };
+
+  const categoriesList = categories.map(cat => ({
+    name: cat.name,
+    key: cat.name,
+    img: cat.image || "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800",
+    count: getCategoryCount(cat.name)
+  }));
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,10 +155,9 @@ export default function Home() {
                         className="w-full h-14 px-4 pr-10 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all appearance-none cursor-pointer"
                       >
                         <option value="Toutes catégories">Toutes catégories</option>
-                        <option value="Earthmoving">Earthmoving (Terrassement)</option>
-                        <option value="Lifting">Lifting (Levage)</option>
-                        <option value="Concrete">Concrete (Béton)</option>
-                        <option value="Tools">Tools (Outillage)</option>
+                        {categories.map((cat, i) => (
+                          <option key={i} value={cat.name}>{cat.name}</option>
+                        ))}
                       </select>
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                         <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -275,7 +279,7 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
-            {categories.map((cat, i) => (
+            {categoriesList.map((cat, i) => (
               <CategoryCard key={i} item={cat} index={i} />
             ))}
           </div>
@@ -549,7 +553,10 @@ function CategoryCard({ item, index }: { item: any; index: number }) {
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
     >
-      <Link href="/equipment" className="group relative block h-[320px] rounded-[2rem] overflow-hidden shadow-lg shadow-gray-100 hover:shadow-2xl transition-all duration-500">
+      <Link 
+        href={`/equipment?category=${item.key}`} 
+        className="group relative block h-[320px] rounded-[2rem] overflow-hidden shadow-lg shadow-gray-100 hover:shadow-2xl transition-all duration-500"
+      >
         <img 
           src={item.img} 
           alt={item.name} 
