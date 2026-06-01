@@ -116,6 +116,11 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
 
     try {
       setLoading(true);
+
+      // Generate tracking code first so we can save it to DB
+      const code = generateTrackingCode();
+      setTrackingCode(code);
+
       const payload = {
         client_nom: clientNom,
         client_telephone: clientTelephone,
@@ -123,6 +128,7 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
         date_debut: startDate,
         date_fin: endDate,
         materielId: Number(id),
+        tracking_code: code // Fixed: Send the tracking code to the backend
       };
 
       // Save to database for tracking
@@ -131,9 +137,7 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
         body: JSON.stringify(payload),
       });
 
-      // Generate tracking code and persist to localStorage
-      const code = generateTrackingCode();
-      setTrackingCode(code);
+      // Persist to localStorage for client-side local lookup if needed
       saveTrackedReservation({
         trackingCode: code,
         reservationId: id,

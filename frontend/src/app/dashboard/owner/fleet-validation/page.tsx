@@ -9,7 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 
-export default function AdminEquipment() {
+export default function FleetValidation() {
   const { equipment, users, updateEquipment } = useData();
   const { showToast } = useToast();
   const [filter, setFilter] = useState<"pending" | "active" | "rejected">("pending");

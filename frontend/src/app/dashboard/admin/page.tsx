@@ -92,7 +92,7 @@ export default function AdminOverview() {
         <div className="lg:col-span-8 flex flex-col gap-8">
           <div className="flex justify-between items-center">
             <h3 className="text-2xl font-bold">Fleet Validation Queue</h3>
-            <Link href="/dashboard/admin/equipment" className="text-xs font-bold text-primary hover:underline">Manage All</Link>
+            <Link href="/dashboard/owner/fleet-validation" className="text-xs font-bold text-primary hover:underline">Manage All</Link>
           </div>
           
           <Table headers={["Machinery", "Owner", "Status", "Actions"]}>

@@ -6,7 +6,7 @@ export class ExpertsController {
   constructor(private readonly expertsService: ExpertsService) {}
 
   @Post()
-  create(@Body() createExpertDto: any) {
+  create(@Body() createExpertDto: Record<string, any>) {
     return this.expertsService.create(createExpertDto);
   }
 

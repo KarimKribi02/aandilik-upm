@@ -1,8 +1,19 @@
-import { 
-  Controller, Get, Post, Body, Patch, Param, Delete, 
-  UseGuards, Request, SetMetadata, 
-  UseInterceptors, UploadedFile, BadRequestException 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+  SetMetadata,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
+import { Request as ExpressRequest } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -11,6 +22,15 @@ import { MaterielService } from './materiel.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/entities/user.entity';
+import { CreateMaterielDto } from './dto/create-materiel.dto';
+
+interface RequestWithUser extends ExpressRequest {
+  user: {
+    userId: number;
+    email: string;
+    role: UserRole;
+  };
+}
 
 // Config Multer Storage for file uploads
 const storage = diskStorage({
@@ -27,7 +47,11 @@ const storage = diskStorage({
   },
 });
 
-const fileFilter = (req: any, file: Express.Multer.File, cb: any) => {
+const fileFilter = (
+  req: ExpressRequest,
+  file: Express.Multer.File,
+  cb: (error: Error | null, acceptFile: boolean) => void,
+) => {
   if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
     return cb(new BadRequestException('Only image files are allowed!'), false);
   }
@@ -41,16 +65,21 @@ export class MaterielController {
   // 1. Dedicated file upload endpoint
   @Post('upload')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', {
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-  }))
-  uploadFile(@UploadedFile() file: Express.Multer.File, @Request() req) {
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: storage,
+      fileFilter: fileFilter,
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    }),
+  )
+  uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: RequestWithUser,
+  ) {
     if (!file) {
       throw new BadRequestException('No file uploaded or file is not an image');
     }
-    const host = `${req.protocol}://${req.get('host')}`;
+    const host = `${req.protocol}://${req.get('host') ?? ''}`;
     const fileUrl = `${host}/uploads/${file.filename}`;
     return { url: fileUrl };
   }
@@ -59,9 +88,10 @@ export class MaterielController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', [UserRole.PROPRIETAIRE, UserRole.ADMINISTRATEUR])
-  create(@Body() body: any, @Request() req) {
-    const materielData = body.materiel || body;
-    const host = `${req.protocol}://${req.get('host')}`;
+  create(@Body() body: Record<string, any>, @Request() req: RequestWithUser) {
+    const rawBody = body;
+    const materielData = (rawBody.materiel || rawBody) as CreateMaterielDto;
+    const host = `${req.protocol}://${req.get('host') ?? ''}`;
     return this.materielService.create(materielData, req.user, host);
   }
 
@@ -72,7 +102,7 @@ export class MaterielController {
 
   @Get('owner')
   @UseGuards(JwtAuthGuard)
-  findMyEquipment(@Request() req) {
+  findMyEquipment(@Request() req: RequestWithUser) {
     return this.materielService.findByOwner(req.user.userId);
   }
 
@@ -84,16 +114,27 @@ export class MaterielController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', [UserRole.PROPRIETAIRE, UserRole.ADMINISTRATEUR])
-  update(@Param('id') id: string, @Body() body: any, @Request() req) {
-    const materielData = body.materiel || body;
-    const host = `${req.protocol}://${req.get('host')}`;
-    return this.materielService.update(+id, materielData, req.user.userId, host);
+  update(
+    @Param('id') id: string,
+    @Body() body: Record<string, any>,
+    @Request() req: RequestWithUser,
+  ) {
+    const rawBody = body;
+    const materielData = (rawBody.materiel ||
+      rawBody) as Partial<CreateMaterielDto>;
+    const host = `${req.protocol}://${req.get('host') ?? ''}`;
+    return this.materielService.update(
+      +id,
+      materielData,
+      req.user.userId,
+      host,
+    );
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', [UserRole.PROPRIETAIRE, UserRole.ADMINISTRATEUR])
-  remove(@Param('id') id: string, @Request() req) {
-    return this.materielService.remove(+id, req.user.userId);
+  remove(@Param('id') id: string) {
+    return this.materielService.remove(+id);
   }
 }

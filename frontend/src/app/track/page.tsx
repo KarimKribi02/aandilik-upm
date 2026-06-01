@@ -3,9 +3,9 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Search,
-  MapPin,
   Clock,
   CheckCircle2,
   Activity,
@@ -115,8 +115,6 @@ function StatusBadge({ status }: { status: TrackedReservation["status"] }) {
 function TrackingResult({ reservation }: { reservation: TrackedReservation }) {
   const [copied, setCopied] = useState(false);
   const activeStep = getActiveStep(reservation.status);
-  const isCancelled = reservation.status === "Cancelled";
-  const steps = isCancelled ? [...STATUS_STEPS.slice(0, activeStep >= 0 ? activeStep + 1 : 1), CANCELLED_STEP] : STATUS_STEPS;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(reservation.trackingCode);
@@ -136,15 +134,12 @@ function TrackingResult({ reservation }: { reservation: TrackedReservation }) {
         {/* Equipment Card */}
         <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
           <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-            <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-100 shadow-sm">
-              <img
+            <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-100 shadow-sm relative">
+              <Image
                 src={reservation.equipmentImage || "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=400"}
                 alt={reservation.equipmentName}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=400";
-                }}
+                fill
+                className="object-cover"
               />
             </div>
             <div className="flex flex-col gap-3 flex-1">
@@ -341,14 +336,14 @@ function TrackPageContent() {
   useEffect(() => {
     const code = searchParams.get("code");
     if (code) {
-      setTrackingCode(code);
-      setLoading(true);
       setTimeout(() => {
+        setTrackingCode(code);
+        setLoading(true);
         const found = findReservationByCode(code);
         setResult(found);
         setNotFound(!found);
         setLoading(false);
-      }, 800);
+      }, 0);
     }
   }, [searchParams]);
 

@@ -17,11 +17,13 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
 
   useEffect(() => {
     if (isOpen) {
-      setShow(true);
+      const timer = setTimeout(() => setShow(true), 0);
       document.body.style.overflow = "hidden";
+      return () => clearTimeout(timer);
     } else {
-      setTimeout(() => setShow(false), 300);
+      const timer = setTimeout(() => setShow(false), 300);
       document.body.style.overflow = "auto";
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 

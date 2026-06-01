@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -18,13 +27,13 @@ export class BlogController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() data: any) {
+  create(@Body() data: Record<string, any>) {
     return this.blogService.create(data);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  update(@Param('id') id: string, @Body() data: any) {
+  update(@Param('id') id: string, @Body() data: Record<string, any>) {
     return this.blogService.update(+id, data);
   }
 

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards, SetMetadata } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  UseGuards,
+  SetMetadata,
+} from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { Category } from './entities/category.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -28,7 +38,10 @@ export class CategoriesController {
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', ['administrateur'])
-  update(@Param('id') id: string, @Body() categoryData: Partial<Category>): Promise<Category | null> {
+  update(
+    @Param('id') id: string,
+    @Body() categoryData: Partial<Category>,
+  ): Promise<Category | null> {
     return this.categoriesService.update(+id, categoryData);
   }
 

@@ -24,6 +24,7 @@ import {
   Headphones
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { mockPartners } from "@/data/mockData";
@@ -78,10 +79,12 @@ export default function Home() {
       <section className="relative h-[85vh] min-h-[750px] flex items-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
-          <img 
+          <Image 
             src="/hero-section.png" 
             alt="Hero Construction" 
-            className="w-full h-full object-cover"
+            fill
+            priority
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 bg-black/20" />
@@ -251,7 +254,7 @@ export default function Home() {
                 <Users className="text-[#f59e0b]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
-                <h3 className="font-bold text-gray-900 text-base">Des milliers d'utilisateurs</h3>
+                <h3 className="font-bold text-gray-900 text-base">Des milliers d&apos;utilisateurs</h3>
                 <p className="text-gray-500 text-xs leading-snug">Rejoignez une communauté en pleine croissance</p>
               </div>
             </div>
@@ -347,7 +350,7 @@ export default function Home() {
               <div className="xl:col-span-4 flex flex-col gap-6 text-center xl:text-left">
                 <div className="flex items-center gap-3 justify-center xl:justify-start">
                   <div className="w-8 h-[2px] bg-[#f59e0b]" />
-                  <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">L'excellence Aandilik</span>
+                  <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">L&apos;excellence Aandilik</span>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-[1.1] tracking-tight">
                   Une expérience <br /> de location <br /> <span className="text-gray-300">SANS COMPROMIS</span>
@@ -396,7 +399,7 @@ export default function Home() {
                   </div>
                   <div className="flex flex-col gap-3 text-center xl:text-left">
                     <h3 className="font-black text-gray-900 text-lg tracking-tight">Assistance 24/7</h3>
-                    <p className="text-gray-400 text-xs font-semibold leading-relaxed px-4 xl:px-0">Une équipe dédiée d'experts à votre écoute en permanence.</p>
+                    <p className="text-gray-400 text-xs font-semibold leading-relaxed px-4 xl:px-0">Une équipe dédiée d&apos;experts à votre écoute en permanence.</p>
                   </div>
                 </div>
               </div>
@@ -452,7 +455,7 @@ export default function Home() {
               {[...(partners.length > 0 ? partners : mockPartners), ...(partners.length > 0 ? partners : mockPartners)].map((p, i) => (
                 <div key={i} className="flex-shrink-0 flex items-center justify-center min-w-[140px] h-16 grayscale hover:grayscale-0 opacity-40 hover:opacity-100 transition-all duration-500 cursor-default">
                   {p.logo ? (
-                    <img src={p.logo} alt={p.name} className="max-h-10 max-w-[120px] object-contain" />
+                    <Image src={p.logo} alt={p.name} width={120} height={40} className="max-h-10 max-w-[120px] object-contain" />
                   ) : (
                     <span className="text-xl font-black tracking-tight text-gray-800" style={{ fontFamily: "'Arial Black', sans-serif" }}>
                       {p.name}
@@ -470,10 +473,11 @@ export default function Home() {
         <div className="container mx-auto px-6 max-w-[1440px]">
           <div className="relative h-[480px] rounded-[3.5rem] overflow-hidden shadow-2xl group">
             {/* Background Image */}
-            <img 
+            <Image 
               src="/img.png" 
               alt="Final CTA Background" 
-              className="absolute inset-0 w-full h-full object-cover object-center"
+              fill
+              className="object-cover object-center"
             />
             
             {/* Lighted Gradient Overlay */}
@@ -483,7 +487,7 @@ export default function Home() {
             <div className="relative z-10 h-full flex flex-col justify-center px-10 md:px-16 gap-6 max-w-2xl">
               <div className="flex flex-col gap-2">
                 <span className="text-white/80 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs">
-                  Vous ne trouvez pas le matériel qu'il vous faut ?
+                  Vous ne trouvez pas le matériel qu&apos;il vous faut ?
                 </span>
                 <h2 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tight">
                   Publiez votre <span className="text-primary">demande</span>
@@ -557,10 +561,11 @@ function CategoryCard({ item, index }: { item: any; index: number }) {
         href={`/equipment?category=${item.key}`} 
         className="group relative block h-[320px] rounded-[2rem] overflow-hidden shadow-lg shadow-gray-100 hover:shadow-2xl transition-all duration-500"
       >
-        <img 
+        <Image 
           src={item.img} 
           alt={item.name} 
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-40 group-hover:opacity-60 transition-opacity" />
 
@@ -595,10 +600,11 @@ function EquipmentCard({ item, index }: { item: any; index: number }) {
     >
       <Card variant="lowest" className="group flex flex-col border border-surface-container shadow-sm hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] transition-all duration-1000 rounded-[3.5rem] overflow-hidden bg-white">
         <Link href={`/equipment/${item.id}`} className="relative aspect-[16/11] overflow-hidden m-4 rounded-[2.5rem]">
-          <img 
+          <Image 
             src={item.image} 
             alt={item.name} 
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+            fill
+            className="object-cover transition-transform duration-1000 group-hover:scale-110"
           />
           <div className="absolute top-6 left-6 glass-light px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md">{item.category}</div>
           <div className="absolute bottom-6 right-6 w-14 h-14 bg-white/90 backdrop-blur-md rounded-3xl flex items-center justify-center text-secondary hover:text-primary hover:scale-110 transition-all duration-500 cursor-pointer shadow-xl opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
@@ -652,10 +658,11 @@ function FeaturedMachineCard({ item, index }: { item: any; index: number }) {
       viewport={{ once: true }}
     >
       <Link href={`/equipment/${item.id}`} className="group relative block h-[380px] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
-        <img 
+        <Image 
           src={item.image} 
           alt={item.name} 
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
         
         {/* Dark Gradient Overlay */}
@@ -689,10 +696,11 @@ function SectorCard({ item, index }: { item: any; index: number }) {
       viewport={{ once: true }}
       className="group relative cursor-pointer h-[320px] md:h-[400px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500"
     >
-      <img 
+      <Image 
         src={item.img} 
         alt={item.name} 
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+        fill
+        className="object-cover transition-transform duration-1000 group-hover:scale-110"
       />
       
       {/* Dynamic Overlay */}
@@ -718,10 +726,11 @@ function BlogCard({ item, index }: { item: any; index: number }) {
     >
       <Link href="/blog" className="group relative block h-[420px] rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500">
         {item.image ? (
-          <img 
+          <Image 
             src={item.image} 
             alt={item.title} 
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110"
+            fill
+            className="object-cover transition-transform duration-[1500ms] group-hover:scale-110"
           />
         ) : (
           <div className="absolute inset-0 w-full h-full bg-surface-container transition-transform duration-[1500ms] group-hover:scale-110" />

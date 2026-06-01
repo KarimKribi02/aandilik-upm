@@ -10,7 +10,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   };
 
   const maxRetries = 3;
-  let lastError: any;
+  let lastError: unknown;
 
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -41,12 +41,12 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
       const text = await response.text();
       return text ? JSON.parse(text) : null;
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       lastError = err;
       
-      // Only retry on network errors (TypeError: Failed to fetch)
+      const errorObject = err instanceof Error ? err : new Error(String(err));
       // Do not retry on HTTP errors (like 401, 400, etc.) which are already thrown above
-      if (err instanceof TypeError || err.message === "Failed to fetch") {
+      if (err instanceof TypeError || errorObject.message === "Failed to fetch") {
         console.warn(`[API] Connection failed to ${endpoint}. Retrying (${i + 1}/${maxRetries})...`);
         await new Promise(resolve => setTimeout(resolve, 800 * (i + 1))); // Exponential backoff
         continue;

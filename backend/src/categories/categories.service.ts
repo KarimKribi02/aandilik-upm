@@ -23,7 +23,10 @@ export class CategoriesService {
     return this.categoryRepository.save(category);
   }
 
-  async update(id: number, categoryData: Partial<Category>): Promise<Category | null> {
+  async update(
+    id: number,
+    categoryData: Partial<Category>,
+  ): Promise<Category | null> {
     await this.categoryRepository.update(id, categoryData);
     return this.findOne(id);
   }

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Delete, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Delete,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { PartnersService } from './partners.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -13,7 +21,7 @@ export class PartnersController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@Body() data: any) {
+  create(@Body() data: Record<string, any>) {
     return this.partnersService.create(data);
   }
 

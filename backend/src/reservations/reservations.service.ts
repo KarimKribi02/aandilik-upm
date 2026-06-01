@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Reservation, ReservationStatus } from './entities/reservation.entity';
@@ -18,12 +22,18 @@ export class ReservationsService {
     private mailService: MailService,
   ) {}
 
-  async create(reservationData: CreateReservationDto, materielId: number, client: any): Promise<Reservation> {
+  async create(
+    reservationData: CreateReservationDto,
+    materielId: number,
+    client: Record<string, any> | null,
+  ): Promise<Reservation> {
     if (!reservationData) {
       throw new BadRequestException('Reservation data is required');
     }
 
-    const materiel = await this.materielRepository.findOne({ where: { id: materielId } });
+    const materiel = await this.materielRepository.findOne({
+      where: { id: materielId },
+    });
     if (!materiel) {
       throw new NotFoundException(`Materiel with ID ${materielId} not found`);
     }
@@ -36,7 +46,9 @@ export class ReservationsService {
     }
 
     // Calculate price and commission
-    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24));
+    const days = Math.ceil(
+      (end.getTime() - start.getTime()) / (1000 * 3600 * 24),
+    );
     const prix_total = days * materiel.prix_location;
     const commission = prix_total * this.COMMISSION_RATE;
 
@@ -54,7 +66,9 @@ export class ReservationsService {
   }
 
   async findAll(): Promise<Reservation[]> {
-    return this.reservationRepository.find({ relations: ['materiel', 'client'] });
+    return this.reservationRepository.find({
+      relations: ['materiel', 'client'],
+    });
   }
 
   async findByOwner(ownerId: number): Promise<Reservation[]> {
@@ -82,9 +96,14 @@ export class ReservationsService {
     return reservation;
   }
 
-  async updateStatus(id: number, statut: ReservationStatus, ownerId: number): Promise<Reservation> {
+  async updateStatus(
+    id: number,
+    statut: ReservationStatus,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _ownerId: number,
+  ): Promise<Reservation> {
     const reservation = await this.findOne(id);
-    
+
     reservation.statut = statut;
     const saved = await this.reservationRepository.save(reservation);
 
@@ -97,11 +116,12 @@ export class ReservationsService {
           reservation.client_nom || reservation.client?.nom || 'Client',
           statut,
           reservation.materiel.nom_equipement,
-          reservation.tracking_code
+          reservation.tracking_code,
         );
       }
-    } catch (err) {
-      console.error('Failed to send status update email:', err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Failed to send status update email:', msg);
     }
 
     return saved;
@@ -112,11 +132,11 @@ export class ReservationsService {
     const totalCommission = await this.reservationRepository
       .createQueryBuilder('reservation')
       .select('SUM(reservation.commission)', 'sum')
-      .getRawOne();
-    
+      .getRawOne<{ sum: string | null }>();
+
     return {
       totalReservations,
-      totalCommission: parseFloat(totalCommission.sum || 0),
+      totalCommission: parseFloat(totalCommission?.sum ?? '0'),
     };
   }
 }

@@ -1,4 +1,10 @@
-import { IsString, IsEmail, IsDateString, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 import { ReservationStatus } from '../entities/reservation.entity';
 
 export class CreateReservationDto {

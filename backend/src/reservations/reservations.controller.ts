@@ -1,27 +1,99 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request, SetMetadata } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+  Request,
+  SetMetadata,
+} from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
-import { Reservation, ReservationStatus } from './entities/reservation.entity';
-import { CreateReservationDto } from './dto/create-reservation.dto';
+import { ReservationStatus } from './entities/reservation.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '../users/entities/user.entity';
+import { Request as ExpressRequest } from 'express';
+
+interface RequestWithUser extends ExpressRequest {
+  user: {
+    userId: number;
+    email: string;
+    role: UserRole;
+  };
+}
+
+interface ReservationRequestBody {
+  client_nom?: string;
+  client_telephone?: string;
+  client_email?: string;
+  date_debut?: string;
+  startDate?: string;
+  date_fin?: string;
+  endDate?: string;
+  statut?: string;
+  materielId?: string | number;
+  equipmentId?: string | number;
+  reservation?: {
+    client_nom?: string;
+    client_telephone?: string;
+    client_email?: string;
+    date_debut?: string;
+    date_fin?: string;
+    statut?: string;
+    materielId?: string | number;
+  };
+}
 
 @Controller('reservations')
 export class ReservationsController {
   constructor(private readonly reservationsService: ReservationsService) {}
 
   @Post()
-  create(@Body() body: any, @Request() req) {
+  create(@Body() body: ReservationRequestBody, @Request() req: { user?: any }) {
     const reservationData = {
-      client_nom: body.client_nom || (body.reservation && body.reservation.client_nom),
-      client_telephone: body.client_telephone || (body.reservation && body.reservation.client_telephone),
-      client_email: body.client_email || (body.reservation && body.reservation.client_email),
-      date_debut: body.date_debut || body.startDate || (body.reservation && body.reservation.date_debut),
-      date_fin: body.date_fin || body.endDate || (body.reservation && body.reservation.date_fin),
-      statut: body.statut || (body.reservation && body.reservation.statut),
+      client_nom:
+        body.client_nom ||
+        (body.reservation && body.reservation.client_nom) ||
+        '',
+      client_telephone:
+        body.client_telephone ||
+        (body.reservation && body.reservation.client_telephone) ||
+        '',
+      client_email:
+        body.client_email ||
+        (body.reservation && body.reservation.client_email) ||
+        '',
+      date_debut:
+        body.date_debut ||
+        body.startDate ||
+        (body.reservation && body.reservation.date_debut) ||
+        new Date().toISOString(),
+      date_fin:
+        body.date_fin ||
+        body.endDate ||
+        (body.reservation && body.reservation.date_fin) ||
+        new Date().toISOString(),
+      statut: (body.statut ||
+        (body.reservation && body.reservation.statut) ||
+        ReservationStatus.EN_ATTENTE) as ReservationStatus,
     };
-    const materielId = body.materielId || body.equipmentId || (body.reservation && body.reservation.materielId);
-    return this.reservationsService.create(reservationData as any, +materielId, req.user);
+    const materielId =
+      body.materielId ||
+      body.equipmentId ||
+      (body.reservation && body.reservation.materielId);
+
+    if (!materielId) {
+      throw new Error('Materiel ID is required');
+    }
+
+    return this.reservationsService.create(
+      reservationData,
+      +materielId,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      req.user,
+    );
   }
 
   @Patch(':id')
@@ -30,7 +102,7 @@ export class ReservationsController {
   updateStatus(
     @Param('id') id: string,
     @Body('statut') statut: ReservationStatus,
-    @Request() req,
+    @Request() req: RequestWithUser,
   ) {
     return this.reservationsService.updateStatus(+id, statut, req.user.userId);
   }
@@ -44,7 +116,7 @@ export class ReservationsController {
 
   @Get('owner')
   @UseGuards(JwtAuthGuard)
-  findMyReservations(@Request() req) {
+  findMyReservations(@Request() req: RequestWithUser) {
     return this.reservationsService.findByOwner(req.user.userId);
   }
 

@@ -25,6 +25,7 @@ import {
   SlidersHorizontal
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ListingPage() {
@@ -52,10 +53,12 @@ export default function ListingPage() {
       const loc = urlParams.get("location");
       const maxP = urlParams.get("maxPrice");
 
-      if (search) setSearchQuery(search);
-      if (cat) setActiveCategory(cat);
-      if (loc) setActiveCity(loc);
-      if (maxP) setMaxPrice(Number(maxP));
+      setTimeout(() => {
+        if (search) setSearchQuery(search);
+        if (cat) setActiveCategory(cat);
+        if (loc) setActiveCity(loc);
+        if (maxP) setMaxPrice(Number(maxP));
+      }, 0);
     }
   }, []);
 
@@ -237,10 +240,11 @@ export default function ListingPage() {
       <section className="relative bg-white pt-10 pb-32">
         <div className="absolute right-0 top-0 bottom-0 w-[85%] lg:w-[95%] pointer-events-none hidden md:block overflow-hidden" style={{ zIndex: 0 }}>
           <div className="absolute inset-y-0 left-0 w-1/2 lg:w-[60%] bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
-          <img 
+          <Image 
             src="/equiment-hero.png" 
             alt="Hero Flotte" 
-            className="absolute inset-0 w-full h-full object-cover object-[70%_center]" 
+            fill
+            className="object-cover object-[70%_center]" 
           />
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-50 via-white/20 to-transparent z-10" />
         </div>
@@ -451,10 +455,11 @@ export default function ListingPage() {
       <div className="w-[95%] lg:w-[90%] max-w-[1600px] mx-auto mt-12 mb-12 relative z-10">
         <div className="relative rounded-[24px] lg:rounded-[32px] overflow-hidden bg-zinc-950 flex flex-col justify-center min-h-[280px] border border-zinc-900">
           <div className="absolute inset-0 w-full h-full">
-            <img 
+            <Image 
               src="/last.png" 
               alt="Construction Equipment Background" 
-              className="w-full h-full object-cover object-center opacity-65" 
+              fill
+              className="object-cover object-center opacity-65" 
             />
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/90 to-transparent"></div>
           </div>
@@ -494,14 +499,11 @@ function EquipmentResultCard({ item }: { item: any }) {
   return (
     <Card variant="lowest" className="group rounded-[20px] overflow-hidden border border-slate-200/50 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] transition-all duration-300 bg-white flex flex-col h-full">
       <Link href={`/equipment/${item.id}`} className="relative aspect-[4/3] overflow-hidden block">
-        <img 
-          src={item.image} 
+        <Image 
+          src={item.image || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800"} 
           alt={item.name} 
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          onError={(e: any) => {
-            e.target.onerror = null;
-            e.target.src = "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800";
-          }}
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
         {/* Availability Badge */}
         <div className={`absolute bottom-3 left-3 px-3 py-1 rounded-full text-[9px] font-black tracking-wide uppercase shadow-sm ${

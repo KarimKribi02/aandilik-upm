@@ -5,11 +5,14 @@ import {
   Equipment, 
   User, 
   Reservation, 
-  equipmentList as initialEquipment, 
-  users as initialUsers, 
-  reservations as initialReservations,
+  // equipmentList as initialEquipment, 
+  // users as initialUsers, 
+  // reservations as initialReservations,
   Article,
-  Partner
+  Partner,
+  EquipmentCategory,
+  ReservationStatus,
+  UserRole
 } from "@/data/mockData";
 import { apiFetch } from "@/lib/api";
 import { getAllTrackedReservations, updateTrackedStatus } from "@/lib/tracking";
@@ -62,7 +65,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 // Mappings Backend (French) <-> Frontend (English)
-const mapRole = (role: string): any => {
+const mapRole = (role: string): UserRole => {
   if (!role) return 'Owner';
   const normalized = role.toLowerCase().trim();
   
@@ -79,28 +82,38 @@ const mapRoleForBackend = (role: string): string => {
   if (normalized === 'admin') return 'administrateur';
   if (normalized === 'owner') return 'propriétaire';
   return 'propriétaire';
-}
+};
 
-const mapStatus = (status: string): any => {
+const mapStatusForBackend = (status: string): string => {
+  const s = status.toLowerCase();
+  if (s === 'pending') return 'en attente';
+  if (s === 'confirmed') return 'confirmée';
+  if (s === 'in progress' || s === 'in-progress') return 'en cours';
+  if (s === 'completed') return 'terminée';
+  if (s === 'cancelled') return 'annulée';
+  return 'en attente';
+};
+
+const mapStatus = (status: string): ReservationStatus => {
   if (!status) return 'Pending';
   const normalized = status.toLowerCase();
-  if (normalized === 'en attente') return 'Pending';
-  if (normalized === 'confirmée' || normalized === 'en cours') return 'Confirmed';
-  if (normalized === 'terminée') return 'Completed';
-  if (normalized === 'annulée') return 'Cancelled';
-  if (normalized === 'pending') return 'en attente';
-  if (normalized === 'confirmed') return 'confirmée';
-  if (normalized === 'completed') return 'terminée';
-  if (normalized === 'cancelled') return 'annulée';
+  
+  if (normalized === 'en attente' || normalized === 'pending') return 'Pending';
+  if (normalized === 'confirmée' || normalized === 'confirmed') return 'Confirmed';
+  if (normalized === 'en cours' || normalized === 'in progress' || normalized === 'in-progress') return 'In Progress';
+  if (normalized === 'terminée' || normalized === 'completed') return 'Completed';
+  if (normalized === 'annulée' || normalized === 'cancelled') return 'Cancelled';
+  if (normalized === 'rejected' || normalized === 'rejetée') return 'Rejected';
+  
   return 'Pending';
 };
 
 const transformEquipment = (item: any): Equipment => {
-  const rawImage = item.images || item.image || "";
+  const rawImage = (item.images || item.image || "") as string;
   const isValidImage = rawImage && 
                       rawImage !== "null" && 
                       rawImage !== "undefined" && 
-                      rawImage.length > 10; // Basic check for real data or long URLs
+                      rawImage.length > 10;
 
   const imageUrl = isValidImage 
     ? rawImage 
@@ -110,14 +123,14 @@ const transformEquipment = (item: any): Equipment => {
     id: item.id.toString(),
     ownerId: item.proprietaire?.id?.toString() || "",
     name: item.nom_equipement,
-    category: item.categorie as any,
+    category: (item.categorie || "Earthmoving") as EquipmentCategory,
     pricePerDay: item.prix_location,
     location: item.localisation,
     availability: true, 
     image: imageUrl,
     description: item.description,
     specs: {},
-    status: item.status || "pending",
+    status: (item.status === 'active' || item.status === 'pending' || item.status === 'rejected' ? item.status : "pending") as any,
     poids_operationnel: item.poids_operationnel,
     capacite_godet: item.capacite_godet
   };
@@ -130,7 +143,7 @@ const transformReservation = (item: any): Reservation => ({
   ownerId: item.materiel?.proprietaire?.id?.toString() || "",
   startDate: new Date(item.date_debut).toISOString().split('T')[0],
   endDate: new Date(item.date_fin).toISOString().split('T')[0],
-  status: mapStatus(item.statut),
+  status: mapStatus(item.statut || item.status),
   totalPrice: item.prix_total,
   createdAt: new Date().toISOString(), // Backend lacks createdAt currently
   client_nom: item.client_nom,
@@ -255,14 +268,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initApp();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password?: string): Promise<boolean> => {
     try {
-      const data = await apiFetch("/auth/login", {
+      const { access_token } = await apiFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password })
       });
 
-      localStorage.setItem("aandilik_token", data.access_token);
+      localStorage.setItem("aandilik_token", access_token);
       
       const userData = await apiFetch("/users/me");
       const user: User = {
@@ -382,14 +395,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addReservation = async (data: Omit<Reservation, "id" | "createdAt" | "status">) => {
+  const addReservation = async (data: any) => {
     try {
       await apiFetch("/reservations", {
         method: "POST",
         body: JSON.stringify({
-          materielId: parseInt(data.equipmentId),
-          date_debut: data.startDate,
-          date_fin: data.endDate
+          materielId: parseInt(data.equipmentId || data.materielId),
+          date_debut: data.startDate || data.date_debut,
+          date_fin: data.endDate || data.date_fin,
+          client_nom: data.client_nom,
+          client_email: data.client_email,
+          client_telephone: data.client_telephone,
+          tracking_code: data.tracking_code
         })
       });
       
@@ -405,7 +422,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await apiFetch(`/reservations/${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ statut: mapStatus(status) })
+        body: JSON.stringify({ statut: mapStatusForBackend(status) })
       });
       
       // Update local tracking state if it exists
@@ -416,7 +433,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           t.clientEmail === resData.renterId || t.startDate === resData.startDate
         );
         if (tracked) {
-          updateTrackedStatus(tracked.trackingCode, status as any);
+          // Reject is not handled in tracking UI, map it to Cancelled
+          const trackingStatus = status === "Rejected" ? "Cancelled" : status as any;
+          updateTrackedStatus(tracked.trackingCode, trackingStatus);
         }
       }
 

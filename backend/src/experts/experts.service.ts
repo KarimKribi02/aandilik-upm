@@ -10,8 +10,8 @@ export class ExpertsService {
     private expertsRepository: Repository<Expert>,
   ) {}
 
-  create(expertDto: any) {
-    const expert = this.expertsRepository.create(expertDto);
+  create(expertDto: Record<string, any>) {
+    const expert = this.expertsRepository.create(expertDto as Partial<Expert>);
     return this.expertsRepository.save(expert);
   }
 

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { DemandsService } from './demands.service';
 import { Demand } from './entities/demand.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -8,9 +18,13 @@ export class DemandsController {
   constructor(private readonly demandsService: DemandsService) {}
 
   @Post()
-  async create(@Body() demandData: Partial<Demand>, @Request() req: any) {
+  async create(
+    @Body() demandData: Partial<Demand>,
+    @Request() req: { user?: any },
+  ) {
     // If user is logged in, attach to demand
     if (req.user) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       demandData.user = req.user;
     }
     return this.demandsService.create(demandData);

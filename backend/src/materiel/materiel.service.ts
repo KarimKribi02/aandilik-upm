@@ -6,7 +6,10 @@ import { CreateMaterielDto } from './dto/create-materiel.dto';
 import * as fs from 'fs';
 import { join } from 'path';
 
-function processImageField(images: string | undefined, host: string): string | undefined {
+function processImageField(
+  images: string | undefined,
+  host: string,
+): string | undefined {
   if (!images) return images;
 
   // Check if it is a base64 data URL
@@ -17,17 +20,17 @@ function processImageField(images: string | undefined, host: string): string | u
     const ext = match[1] === 'jpeg' ? 'jpg' : match[1];
     const data = match[2];
     const buffer = Buffer.from(data, 'base64');
-    
+
     const filename = `equip-${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
     const uploadsDir = join(process.cwd(), 'uploads');
-    
+
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
-    
+
     const filePath = join(uploadsDir, filename);
     fs.writeFileSync(filePath, buffer);
-    
+
     return `${host}/uploads/${filename}`;
   }
 
@@ -47,12 +50,16 @@ export class MaterielService {
     private materielRepository: Repository<Materiel>,
   ) {}
 
-  async create(materielData: CreateMaterielDto, owner: any, host: string): Promise<Materiel> {
+  async create(
+    materielData: CreateMaterielDto,
+    owner: { userId?: number; id?: number },
+    host: string,
+  ): Promise<Materiel> {
     const processedImages = processImageField(materielData.images, host);
     const materiel = this.materielRepository.create({
       ...materielData,
       images: processedImages,
-      proprietaire: { id: owner.userId || owner.id },
+      proprietaire: { id: owner.userId ?? owner.id ?? 0 },
     });
     return this.materielRepository.save(materiel);
   }
@@ -62,9 +69,9 @@ export class MaterielService {
   }
 
   async findByOwner(ownerId: number): Promise<Materiel[]> {
-    return this.materielRepository.find({ 
+    return this.materielRepository.find({
       where: { proprietaire: { id: ownerId } },
-      relations: ['reservations']
+      relations: ['reservations'],
     });
   }
 
@@ -79,9 +86,15 @@ export class MaterielService {
     return materiel;
   }
 
-  async update(id: number, materielData: Partial<Materiel>, ownerId: number, host: string): Promise<Materiel> {
+  async update(
+    id: number,
+    materielData: Partial<Materiel>,
+
+    _ownerId: number,
+    host: string,
+  ): Promise<Materiel> {
     const materiel = await this.findOne(id);
-    
+
     if (materielData && Object.keys(materielData).length > 0) {
       const updatePayload = { ...materielData };
       if (updatePayload.images) {
@@ -90,11 +103,11 @@ export class MaterielService {
       await this.materielRepository.update(id, updatePayload);
       return this.findOne(id);
     }
-    
+
     return materiel;
   }
 
-  async remove(id: number, ownerId: number): Promise<void> {
+  async remove(id: number): Promise<void> {
     const materiel = await this.findOne(id);
     await this.materielRepository.remove(materiel);
   }
