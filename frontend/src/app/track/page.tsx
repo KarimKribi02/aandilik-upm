@@ -115,6 +115,7 @@ function StatusBadge({ status }: { status: TrackedReservation["status"] }) {
 function TrackingResult({ reservation }: { reservation: TrackedReservation }) {
   const [copied, setCopied] = useState(false);
   const activeStep = getActiveStep(reservation.status);
+  const isCancelled = reservation.status === "Cancelled";
 
   const handleCopy = () => {
     navigator.clipboard.writeText(reservation.trackingCode);

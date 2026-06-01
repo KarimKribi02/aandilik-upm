@@ -56,7 +56,7 @@ export class ReservationsService {
       ...reservationData,
       materiel,
       tracking_code: reservationData.tracking_code,
-      client: client || null,
+      client: client ? (client as any) : undefined,
       prix_total,
       commission,
       statut: ReservationStatus.EN_ATTENTE,
