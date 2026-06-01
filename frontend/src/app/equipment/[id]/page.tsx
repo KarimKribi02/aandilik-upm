@@ -26,7 +26,8 @@ import {
   Mail,
   Copy,
   Check,
-  ExternalLink
+  ExternalLink,
+  Info
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -34,7 +35,7 @@ import { generateTrackingCode, saveTrackedReservation, buildInitialHistory } fro
 
 export default function DetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { currentUser } = useData();
+  const { currentUser, reservations } = useData();
   const { showToast } = useToast();
   const router = useRouter();
   
@@ -154,25 +155,7 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
         history: buildInitialHistory("Pending", new Date().toISOString()),
       });
 
-      // Format WhatsApp Message with tracking code
-      const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "212773662487";
-      const message = `Bonjour Aandilik, je souhaite réserver l'équipement suivant :
-
-🏗️ *Matériel* : ${equipment.nom_equipement}
-👤 *Client* : ${clientNom}
-📞 *Téléphone* : ${clientTelephone}
-📧 *Email* : ${clientEmail}
-📅 *Dates* : du ${startDate} au ${endDate}
-⏳ *Durée* : ${days} jours
-💰 *Prix Total estimé* : ${totalPrice} MAD
-🔍 *Code de suivi* : ${code}
-
-Merci de me recontacter pour finaliser la location.`;
-
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
-      window.open(whatsappUrl, "_blank");
-      
+      // WhatsApp logic removed - now handled via backend email notification to owner
       setIsSuccessModalOpen(true);
     } catch (err: any) {
       showToast(err.message || "Erreur lors de la réservation", "error");
@@ -199,6 +182,8 @@ Merci de me recontacter pour finaliser la location.`;
       </div>
     );
   }
+
+  const isCurrentlyRented = (reservations || []).some(r => r.equipmentId === id && r.status === 'In Progress');
 
   if (!equipment) {
     return (
@@ -362,9 +347,9 @@ Merci de me recontacter pour finaliser la location.`;
                 {/* Daily rate info */}
                 <div className="flex justify-between items-baseline border-b border-slate-100 pb-4">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">Tarif journalier</span>
-                  <div className="text-right">
-                    <span className="text-4xl font-black text-slate-900 tracking-tight">{pricePerDay}</span>
-                    <span className="text-slate-500 text-xs font-bold ml-1">MAD/jour</span>
+                  <div className="flex items-baseline justify-end gap-1.5">
+                    <span className="text-4xl font-black text-slate-900">{pricePerDay}</span>
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-tight">MAD/jour</span>
                   </div>
                 </div>
 
@@ -475,14 +460,32 @@ Merci de me recontacter pour finaliser la location.`;
                   </AnimatePresence>
 
                   {/* Submit Button */}
-                  <Button 
-                    type="submit"
-                    loading={loading}
-                    disabled={days <= 0 || loading || equipment.status !== 'active'}
-                    className="w-full h-14 mt-3 rounded-2xl text-xs font-black uppercase tracking-widest text-zinc-950"
-                  >
-                    {equipment.status !== 'active' ? "En cours de maintenance" : "Réserver Maintenant"} <ArrowRight className="ml-2" size={14} />
-                  </Button>
+                  {isCurrentlyRented ? (
+                    <div className="flex flex-col gap-4 mt-3">
+                      <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3">
+                        <ShieldCheck size={16} className="text-red-500 shrink-0 mt-0.5" />
+                        <p className="text-[10px] text-red-700 font-bold leading-relaxed">
+                          Ce matériel est actuellement en possession d'un client et sera de nouveau disponible bientôt.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        disabled
+                        className="w-full h-14 rounded-2xl bg-slate-100 text-slate-400 font-black flex items-center justify-center gap-3 border-none text-[10px] uppercase tracking-widest"
+                      >
+                         Actuellement indisponible
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      type="submit"
+                      loading={loading}
+                      disabled={days <= 0 || loading || equipment.status !== 'active'}
+                      className="w-full h-14 mt-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-zinc-950"
+                    >
+                      {equipment.status !== 'active' ? "Indisponible" : "Réserver Maintenant"} <ArrowRight className="ml-2" size={14} />
+                    </Button>
+                  )}
                 </form>
 
                 <div className="flex flex-col gap-2.5 text-[9px] font-black uppercase tracking-widest px-1">
@@ -515,24 +518,18 @@ Merci de me recontacter pour finaliser la location.`;
         </div>
       </div>
 
-      {/* Success Modal with Tracking Code */}
+      {/* Success Modal without initial Tracking Code */}
       <Modal
         isOpen={isSuccessModalOpen}
         onClose={() => {
           setIsSuccessModalOpen(false);
           router.push("/");
         }}
-        title="Réservation Confirmée"
+        title="Réservation Enregistrée"
         footer={(
           <div className="flex flex-col gap-3 w-full">
-            <Link href={`/track?code=${trackingCode}`} onClick={() => setIsSuccessModalOpen(false)}>
-              <Button className="w-full h-14 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-950">
-                Suivre ma réservation <ExternalLink className="ml-2" size={14} />
-              </Button>
-            </Link>
             <Button 
-              variant="secondary"
-              className="w-full h-11 rounded-xl text-xs font-black uppercase tracking-widest" 
+              className="w-full h-14 rounded-xl text-xs font-black uppercase tracking-widest text-zinc-950" 
               onClick={() => { setIsSuccessModalOpen(false); router.push("/"); }}
             >
               Retourner à l&apos;accueil
@@ -541,37 +538,32 @@ Merci de me recontacter pour finaliser la location.`;
         )}
       >
         <div className="flex flex-col items-center text-center gap-6 py-4">
-          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center text-green-500 border border-green-100 shadow-sm">
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center text-primary border border-primary/20 shadow-sm animate-pulse-slow">
             <CheckCircle2 size={40} />
           </div>
           <div className="flex flex-col gap-2">
-            <h4 className="text-xl font-black text-slate-900 tracking-tight">Demande Enregistrée !</h4>
+            <h4 className="text-xl font-black text-slate-900 tracking-tight">Demande bien reçue !</h4>
             <p className="text-slate-500 text-xs font-medium leading-relaxed px-4">
-              Un code de suivi unique a été généré pour votre réservation. Conservez-le pour suivre l&apos;état de votre location en temps réel.
+              Votre demande de location a été transmise au propriétaire pour validation. 
+              Une fois acceptée, vous recevrez automatiquement votre <strong>code de suivi</strong> par email.
             </p>
           </div>
 
-          {/* Tracking Code Display */}
-          <div className="w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 flex flex-col items-center gap-3">
-            <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Votre Code de Suivi</div>
-            <div className="text-2xl font-black tracking-[0.15em] text-slate-900 font-mono">{trackingCode}</div>
-            <button
-              onClick={handleCopyCode}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                copied 
-                  ? "bg-green-500 text-white" 
-                  : "bg-white border border-slate-200 text-slate-700 hover:border-primary hover:text-primary"
-              }`}
-            >
-              {copied ? <><Check size={12} /> Copié !</> : <><Copy size={12} /> Copier le code</>}
-            </button>
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center gap-4">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-slate-400 border border-slate-100 shadow-sm">
+              <Mail size={24} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Étape suivante</div>
+              <div className="text-sm font-bold text-slate-900">Surveillez votre boîte mail</div>
+              <div className="text-[10px] text-slate-500">{clientEmail}</div>
+            </div>
           </div>
 
-          {/* Simulated email */}
           <div className="w-full bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-start gap-3 text-left">
-            <Mail size={14} className="text-blue-500 mt-0.5 shrink-0" />
+            <Info size={14} className="text-blue-500 mt-0.5 shrink-0" />
             <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
-              Un email contenant ce code de suivi a été envoyé (simulé) à <strong>{clientEmail}</strong>. Utilisez ce code sur la page <strong>/track</strong> pour suivre l&apos;état de votre réservation.
+              Le propriétaire a été notifié de votre intérêt. Le code de suivi vous permettra de consulter les étapes de livraison et l&apos;état de l&apos;engin.
             </p>
           </div>
         </div>

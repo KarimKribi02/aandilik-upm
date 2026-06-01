@@ -33,6 +33,7 @@ export class ReservationsService {
 
     const materiel = await this.materielRepository.findOne({
       where: { id: materielId },
+      relations: ['proprietaire'],
     });
     if (!materiel) {
       throw new NotFoundException(`Materiel with ID ${materielId} not found`);
@@ -62,7 +63,35 @@ export class ReservationsService {
       statut: ReservationStatus.EN_ATTENTE,
     });
 
-    return this.reservationRepository.save(reservation);
+    const saved = await this.reservationRepository.save(reservation);
+
+    // Notify Owner via Email
+    console.log(`Checking owner notification for materiel ${materiel.id} (Owner: ${materiel.proprietaire?.email})`);
+    if (materiel.proprietaire?.email) {
+      try {
+        console.log(`Sending email notification to owner: ${materiel.proprietaire.email}`);
+        await this.mailService.sendNewReservationNotification(
+          materiel.proprietaire.email,
+          materiel.proprietaire.nom || 'Propriétaire',
+          {
+            clientNom: reservation.client_nom || client?.nom || 'Client',
+            clientTelephone: reservation.client_telephone || 'N/A',
+            clientEmail: reservation.client_email || client?.email || 'N/A',
+            dateDebut: reservation.date_debut instanceof Date ? reservation.date_debut.toISOString().split('T')[0] : reservation.date_debut,
+            dateFin: reservation.date_fin instanceof Date ? reservation.date_fin.toISOString().split('T')[0] : reservation.date_fin,
+            equipmentName: materiel.nom_equipement,
+            trackingCode: reservation.tracking_code || 'N/A',
+            totalPrice: prix_total,
+          },
+        );
+      } catch (err) {
+        console.error('Failed to notify owner:', err);
+      }
+    } else {
+      console.warn(`No owner email found for materiel ${materiel.id}. Notification skipped.`);
+    }
+
+    return saved;
   }
 
   async findAll(): Promise<Reservation[]> {

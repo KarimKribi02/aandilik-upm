@@ -8,7 +8,7 @@ export class Category {
   @Column()
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   image: string;
 
   @Column({ type: 'text', nullable: true })

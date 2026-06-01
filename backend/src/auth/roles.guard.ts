@@ -22,6 +22,30 @@ export class RolesGuard implements CanActivate {
     }
     const request = context.switchToHttp().getRequest<{ user: RequestUser }>();
     const { user } = request;
-    return requiredRoles.some((role) => user.role?.includes(role));
+
+    if (!user || !user.role) {
+      return false;
+    }
+
+    // Normalize user roles for comparison
+    const userRoleRaw = user.role;
+    const userRoles = (Array.isArray(userRoleRaw) ? userRoleRaw : [userRoleRaw])
+      .map(r => String(r).toLowerCase().trim());
+
+    // Normalize required roles
+    const normalizedRequired = requiredRoles.map(r => String(r).toLowerCase().trim());
+
+    // Basic role mapping to bridge possible English/French mismatches
+    const hasMatch = normalizedRequired.some((role) => {
+      if (userRoles.includes(role)) return true;
+      
+      // Explicit mappings for Owner/Propriétaire
+      if (role === 'propriétaire' && (userRoles.includes('owner') || userRoles.includes('proprietaire'))) return true;
+      if (role === 'administrateur' && (userRoles.includes('admin') || userRoles.includes('administrator'))) return true;
+      
+      return false;
+    });
+
+    return hasMatch;
   }
 }

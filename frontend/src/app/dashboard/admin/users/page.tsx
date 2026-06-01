@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/FormElements";
 import { Modal } from "@/components/ui/Modal";
 import { useData } from "@/context/DataProvider";
 import { useToast } from "@/components/ui/Toast";
-import { ShieldOff, Mail, Search, UserPlus, Trash2, Eye, EyeOff } from "lucide-react";
+import { ShieldOff, Mail, Search, UserPlus, Trash2, Eye, EyeOff, Phone } from "lucide-react";
 import { useState } from "react";
 
 export default function AdminUsers() {
@@ -22,6 +22,7 @@ export default function AdminUsers() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    telephone: "",
     password: "",
     confirmPassword: ""
   });
@@ -36,7 +37,7 @@ export default function AdminUsers() {
   const adminCount = (users || []).filter(u => u.role === "Admin").length;
 
   const resetForm = () => {
-    setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+    setFormData({ name: "", email: "", telephone: "", password: "", confirmPassword: "" });
     setShowPassword(false);
   };
 
@@ -60,7 +61,7 @@ export default function AdminUsers() {
 
     setLoading(true);
     try {
-      await createUser(formData.name, formData.email, formData.password, "Owner");
+      await createUser(formData.name, formData.email, formData.password, "Owner", formData.telephone);
       showToast(`Owner account created for ${formData.name}.`, "success");
       resetForm();
       setIsCreateModalOpen(false);
@@ -147,8 +148,13 @@ export default function AdminUsers() {
                 </div>
                 <div>
                   <div className="font-bold text-sm tracking-tight">{user.name || "Unnamed"}</div>
-                  <div className="text-[10px] text-secondary font-bold uppercase tracking-widest flex items-center gap-1 mt-0.5">
-                    <Mail size={10} /> {user.email}
+                  <div className="flex flex-col gap-0.5 mt-0.5">
+                    <div className="text-[10px] text-secondary font-bold uppercase tracking-widest flex items-center gap-1">
+                      <Mail size={10} /> {user.email}
+                    </div>
+                    <div className="text-[10px] text-primary/60 font-bold uppercase tracking-widest flex items-center gap-1">
+                      <Phone size={10} /> {user.telephone || "Numéro non renseigné"}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -225,6 +231,12 @@ export default function AdminUsers() {
             value={formData.email}
             onChange={(e: any) => setFormData({...formData, email: e.target.value})}
             required 
+          />
+          <Input 
+            label="Phone Number" 
+            placeholder="e.g. 0612345678" 
+            value={formData.telephone}
+            onChange={(e: any) => setFormData({...formData, telephone: e.target.value})}
           />
           <div className="grid grid-cols-2 gap-4">
             <div>

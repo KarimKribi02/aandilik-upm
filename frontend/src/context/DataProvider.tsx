@@ -51,7 +51,7 @@ interface DataContextType {
   deletePartner: (id: string) => Promise<void>;
   addExpert: (data: { name: string; role: string; image: string }) => Promise<void>;
   deleteExpert: (id: string) => Promise<void>;
-  createUser: (name: string, email: string, password: string, role?: string) => Promise<void>;
+  createUser: (name: string, email: string, password: string, role?: string, telephone?: string) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
   login: (email: string, password?: string) => Promise<boolean>;
   register: (name: string, email: string, role: string, password?: string) => Promise<void>;
@@ -193,7 +193,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (user.role === 'Admin') {
             const allUsers = await apiFetch("/users");
             setUsers(allUsers.map((u: any) => ({
-              id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role)
+              id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role), telephone: u.telephone
             })));
             const allReservations = await apiFetch("/reservations");
             setReservations(allReservations.map(transformReservation));
@@ -447,7 +447,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const createUser = async (name: string, email: string, password: string, role: string = "propri\u00e9taire") => {
+  const createUser = async (name: string, email: string, password: string, role: string = "propriétaire", telephone: string = "") => {
     try {
       await apiFetch("/users", {
         method: "POST",
@@ -455,13 +455,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           nom: name,
           email,
           password,
-          role: mapRoleForBackend(role)
+          role: mapRoleForBackend(role),
+          telephone
         })
       });
       // Refresh users list
       const allUsers = await apiFetch("/users");
       setUsers(allUsers.map((u: any) => ({
-        id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role)
+        id: u.id.toString(), name: u.nom, email: u.email, role: mapRole(u.role), telephone: u.telephone
       })));
     } catch (err) {
       console.error("Failed to create user", err);

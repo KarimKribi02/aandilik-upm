@@ -140,13 +140,11 @@ export default function AdminCategories() {
             <TableCell>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg overflow-hidden relative shrink-0 bg-slate-100">
-                  {cat.image ? (
-                    <img src={cat.image} alt={cat.name} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-slate-400">
-                      <Grid size={16} />
-                    </div>
-                  )}
+                  <img 
+                    src={cat.image || "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800"} 
+                    alt={cat.name} 
+                    className="absolute inset-0 w-full h-full object-cover" 
+                  />
                 </div>
                 <div className="font-bold text-sm tracking-tight">{cat.name}</div>
               </div>

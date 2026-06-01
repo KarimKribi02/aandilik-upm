@@ -29,7 +29,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ListingPage() {
-  const { equipment, categories } = useData();
+  const { equipment, categories, reservations } = useData();
   const dynamicSidebarCategories = [
     { key: "Tous", label: "Tous les matériels" },
     ...categories.map(cat => ({ key: cat.name, label: cat.name }))
@@ -64,12 +64,19 @@ export default function ListingPage() {
 
   const getCategoryCount = (key: string) => {
     if (!equipment) return 0;
-    if (key === "Tous") return equipment.filter((e: any) => e.status === "active").length;
-    return equipment.filter((e: any) => e.status === "active" && (e.category || "").toLowerCase() === key.toLowerCase()).length;
+    const items = equipment.filter((e: any) => e.status === "active");
+    const counts = items.filter((item: any) => {
+      const isRented = (reservations || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
+      if (key === "Tous") return !isRented;
+      return !isRented && (item.category || "").toLowerCase() === key.toLowerCase();
+    });
+    return counts.length;
   };
 
   const filtered = (equipment || []).filter((item: any) => {
     if (item.status !== "active") return false;
+
+    const isRented = (reservations || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
 
     // Category filter
     const matchesCategory =
@@ -99,7 +106,7 @@ export default function ListingPage() {
     const matchesCapacity = capNum <= maxCapacity;
 
     // Availability
-    const matchesAvailable = !onlyAvailable || item.availability;
+    const matchesAvailable = !onlyAvailable || !isRented;
 
     return matchesCategory && matchesSearch && matchesCity && matchesPrice && matchesPower && matchesCapacity && matchesAvailable;
   });
@@ -148,7 +155,7 @@ export default function ListingPage() {
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-900">Prix Max (DH/jour)</h3>
-          <span className="text-xs font-black text-primary bg-zinc-950 px-2 py-0.5 rounded">{maxPrice} DH</span>
+          <span className="text-[10px] font-black text-zinc-900 bg-zinc-100/80 px-2 py-1 rounded-md border border-zinc-200/50">{maxPrice} DH</span>
         </div>
         <div className="px-1">
           <input 
@@ -171,7 +178,7 @@ export default function ListingPage() {
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-900">Puissance Max (kW)</h3>
-          <span className="text-xs font-black text-primary bg-zinc-950 px-2 py-0.5 rounded">{maxPower} kW</span>
+          <span className="text-[10px] font-black text-zinc-900 bg-zinc-100/80 px-2 py-1 rounded-md border border-zinc-200/50">{maxPower} kW</span>
         </div>
         <div className="px-1">
           <input 
@@ -194,7 +201,7 @@ export default function ListingPage() {
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-900">Capacité Max (m³)</h3>
-          <span className="text-xs font-black text-primary bg-zinc-950 px-2 py-0.5 rounded">{maxCapacity} m³</span>
+          <span className="text-[10px] font-black text-zinc-900 bg-zinc-100/80 px-2 py-1 rounded-md border border-zinc-200/50">{maxCapacity} m³</span>
         </div>
         <div className="px-1">
           <input 
@@ -326,9 +333,10 @@ export default function ListingPage() {
           {/* Cards Area */}
           <main className="lg:col-span-9 flex flex-col">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-8">
-              {filtered.map((item: any) => (
-                <EquipmentResultCard key={item.id} item={item} />
-              ))}
+              {filtered.map((item: any) => {
+                const isCurrentlyRented = (reservations || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
+                return <EquipmentResultCard key={item.id} item={item} isRented={isCurrentlyRented} />;
+              })}
             </div>
 
             {filtered.length === 0 && (
@@ -493,8 +501,8 @@ export default function ListingPage() {
   );
 }
 
-function EquipmentResultCard({ item }: { item: any }) {
-  const isAvailable = item.status === "active";
+function EquipmentResultCard({ item, isRented }: { item: any; isRented: boolean }) {
+  const isAvailable = item.status === "active" && !isRented;
   
   return (
     <Card variant="lowest" className="group rounded-[20px] overflow-hidden border border-slate-200/50 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] transition-all duration-300 bg-white flex flex-col h-full">
@@ -503,13 +511,13 @@ function EquipmentResultCard({ item }: { item: any }) {
           src={item.image || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800"} 
           alt={item.name} 
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          className={`object-cover transition-transform duration-700 group-hover:scale-105 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
         />
         {/* Availability Badge */}
         <div className={`absolute bottom-3 left-3 px-3 py-1 rounded-full text-[9px] font-black tracking-wide uppercase shadow-sm ${
           isAvailable ? 'bg-green-950 text-green-400 border border-green-900/50' : 'bg-red-950 text-red-400 border border-red-900/50'
         }`}>
-          {isAvailable ? 'Disponible' : 'Maintenance'}
+          {isRented ? 'Loué / En Service' : isAvailable ? 'Disponible' : 'Maintenance'}
         </div>
       </Link>
 
@@ -530,9 +538,9 @@ function EquipmentResultCard({ item }: { item: any }) {
         </div>
 
         <div className="flex justify-between items-end mt-4 pt-4 border-t border-slate-100">
-          <div className="flex items-baseline gap-1">
-            <span className="text-slate-900 text-xl font-black leading-none">{item.pricePerDay}</span>
-            <span className="text-[10px] font-black text-slate-500 ml-0.5">MAD / jour</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-slate-900 text-2xl font-black">{item.pricePerDay}</span>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">MAD/jour</span>
           </div>
           <Link href={`/equipment/${item.id}`}>
             <button className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:border-primary hover:bg-primary hover:text-zinc-950 transition-all cursor-pointer">

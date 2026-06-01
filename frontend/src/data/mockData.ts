@@ -13,7 +13,7 @@ export interface Equipment {
   image: string;
   description: string;
   specs: { [key: string]: string };
-  status: "active" | "pending" | "rejected";
+  status: "active" | "pending" | "rejected" | "inactive" | "maintenance";
   poids_operationnel?: number;
   capacite_godet?: string;
 }
@@ -24,6 +24,7 @@ export interface User {
   role: UserRole;
   email: string;
   avatar?: string;
+  telephone?: string;
 }
 
 export interface Reservation {

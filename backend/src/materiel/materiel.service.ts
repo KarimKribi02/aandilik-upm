@@ -56,10 +56,13 @@ export class MaterielService {
     host: string,
   ): Promise<Materiel> {
     const processedImages = processImageField(materielData.images, host);
+    const ownerId = owner.userId ?? owner.id ?? 0;
+    console.log(`Creating materiel for owner ID: ${ownerId}`);
+    
     const materiel = this.materielRepository.create({
       ...materielData,
       images: processedImages,
-      proprietaire: { id: owner.userId ?? owner.id ?? 0 },
+      proprietaire: { id: ownerId },
     });
     return this.materielRepository.save(materiel);
   }

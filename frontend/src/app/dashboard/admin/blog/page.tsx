@@ -71,14 +71,14 @@ export default function BlogManagement() {
           <Link href="/dashboard/admin" className="text-xs font-bold text-secondary hover:text-primary flex items-center gap-2 mb-2 transition-colors">
             <ArrowLeft size={14} /> Back to Operations
           </Link>
-          <h1 className="text-4xl font-black tracking-tight">Blog <span className="text-primary">Management</span></h1>
-          <p className="text-secondary text-sm">Create and curate platform editorial content.</p>
+          <h1 className="text-4xl font-black tracking-tight">Gestion des <span className="text-primary">Guides</span></h1>
+          <p className="text-secondary text-sm">Créez et gérez les conseils d&apos;experts par secteur.</p>
         </div>
         <Button 
           onClick={() => setIsAdding(true)}
-          className="gap-2 bg-primary text-white shadow-xl shadow-primary/20"
+          className="gap-2 bg-primary text-white shadow-xl shadow-primary/20 text-[10px] font-black uppercase tracking-widest"
         >
-          <Plus size={20} /> Create New Article
+          <Plus size={20} /> Créer un nouveau Guide
         </Button>
       </div>
 
@@ -96,21 +96,21 @@ export default function BlogManagement() {
                 {/* Image Upload Section */}
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-black uppercase tracking-widest text-secondary">Cover Image</label>
+                    <label className="text-xs font-black uppercase tracking-widest text-secondary">Image de Couverture</label>
                     <div className="flex rounded-xl overflow-hidden border border-surface-container">
                       <button
                         type="button"
                         onClick={() => setImageMode("upload")}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-colors ${imageMode === "upload" ? "bg-primary text-white" : "bg-white text-secondary hover:bg-surface-low"}`}
                       >
-                        <Upload size={13} /> Upload File
+                        <Upload size={13} /> Télécharger
                       </button>
                       <button
                         type="button"
                         onClick={() => setImageMode("url")}
                         className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition-colors ${imageMode === "url" ? "bg-primary text-white" : "bg-white text-secondary hover:bg-surface-low"}`}
                       >
-                        <LinkIcon size={13} /> Image URL
+                        <LinkIcon size={13} /> URL Image
                       </button>
                     </div>
                   </div>
@@ -137,7 +137,7 @@ export default function BlogManagement() {
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                             <div className="flex flex-col items-center gap-2 text-white">
                               <Upload size={24} />
-                              <span className="text-xs font-bold">Click to change image</span>
+                              <span className="text-xs font-bold">Cliquer pour changer</span>
                             </div>
                           </div>
                           <button
@@ -153,9 +153,9 @@ export default function BlogManagement() {
                           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
                             <ImageIcon size={24} className="text-primary" />
                           </div>
-                          <div className="text-center">
-                            <p className="font-bold text-sm text-foreground">Drag & drop your image here</p>
-                            <p className="text-xs mt-1">or <span className="text-primary font-bold">click to browse</span> — JPG, PNG, WEBP</p>
+                          <div className="text-center px-4">
+                            <p className="font-bold text-sm text-foreground">Glissez votre image ici</p>
+                            <p className="text-xs mt-1">ou <span className="text-primary font-bold">parcourez vos fichiers</span> — JPG, PNG, WEBP</p>
                           </div>
                         </div>
                       )}
@@ -172,7 +172,7 @@ export default function BlogManagement() {
                         className="w-full h-12 px-4 rounded-xl bg-white border-none focus:ring-2 focus:ring-primary text-sm font-bold"
                       />
                       {imagePreview && (
-                        <div className="h-40 rounded-2xl overflow-hidden bg-surface-low">
+                        <div className="h-40 rounded-2xl overflow-hidden bg-surface-low mt-2">
                           <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" onError={() => setImagePreview("")} />
                         </div>
                       )}
@@ -184,45 +184,47 @@ export default function BlogManagement() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-secondary">Article Title</label>
+                      <label className="text-xs font-black uppercase tracking-widest text-secondary">Titre du Guide</label>
                       <input 
                         required
                         value={newArticle.title}
                         onChange={e => setNewArticle({...newArticle, title: e.target.value})}
-                        placeholder="e.g. How to maintain your excavator"
+                        placeholder="Ex: Comment optimiser l'usage d'une pelleteuse"
                         className="w-full h-12 px-4 rounded-xl bg-white border-none focus:ring-2 focus:ring-primary text-sm font-bold"
                       />
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-secondary">Category</label>
+                      <label className="text-xs font-black uppercase tracking-widest text-secondary">Secteur / Catégorie</label>
                       <select 
                         value={newArticle.category}
                         onChange={e => setNewArticle({...newArticle, category: e.target.value})}
                         className="w-full h-12 px-4 rounded-xl bg-white border-none focus:ring-2 focus:ring-primary text-sm font-bold"
                       >
-                        <option>CONSEILS</option>
-                        <option>SÉCURITÉ</option>
-                        <option>GUIDE</option>
-                        <option>ACTUALITÉS</option>
+                        <option value="Bâtiment & résidentiel">Bâtiment & résidentiel</option>
+                        <option value="Travaux publics">Travaux publics</option>
+                        <option value="Carrières & mines">Carrières & mines</option>
+                        <option value="Industrie">Industrie</option>
+                        <option value="Infrastructures">Infrastructures</option>
+                        <option value="CONSEILS">Conseils Généraux</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-secondary">Content / Summary</label>
+                    <label className="text-xs font-black uppercase tracking-widest text-secondary">Contenu du Guide</label>
                     <textarea 
                       required
                       value={newArticle.content}
                       onChange={e => setNewArticle({...newArticle, content: e.target.value})}
-                      placeholder="Describe your article content here..."
+                      placeholder="Rédigez votre guide stratégique ici..."
                       className="w-full h-full min-h-[140px] p-4 rounded-xl bg-white border-none focus:ring-2 focus:ring-primary text-sm font-medium resize-none"
                     />
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-4">
-                  <Button type="button" variant="tertiary" onClick={handleReset}>Cancel</Button>
-                  <Button type="submit" className="bg-primary text-white px-12">Publish Article</Button>
+                  <Button type="button" variant="tertiary" onClick={handleReset}>Annuler</Button>
+                  <Button type="submit" className="bg-primary text-white px-12 text-[10px] font-black uppercase tracking-widest">Publier le Guide</Button>
                 </div>
               </form>
             </Card>
@@ -232,10 +234,10 @@ export default function BlogManagement() {
 
       <div className="flex flex-col gap-6">
         <h3 className="text-2xl font-bold flex items-center gap-3">
-          <FileText className="text-primary" /> Published Articles
+          <FileText className="text-primary" /> Guides Publiés
         </h3>
         
-        <Table headers={["Article", "Category", "Published Date", "Actions"]}>
+        <Table headers={["Guide", "Secteur", "Date de Publication", "Actions"]}>
           {articles.length > 0 ? articles.map((article) => (
             <TableRow key={article.id}>
               <TableCell>
@@ -277,7 +279,7 @@ export default function BlogManagement() {
           )) : (
             <TableRow>
               <TableCell colSpan={4} className="text-center py-20 text-secondary italic">
-                No articles published yet. Click the button above to create one.
+                Aucun guide publié. Utilisez le bouton ci-dessus pour en créer un.
               </TableCell>
             </TableRow>
           )}

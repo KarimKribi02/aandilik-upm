@@ -54,12 +54,18 @@ export default function Home() {
     ).length;
   };
 
-  const categoriesList = categories.map(cat => ({
-    name: cat.name,
-    key: cat.name,
-    img: cat.image || "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800",
-    count: getCategoryCount(cat.name)
-  }));
+  const categoriesList = categories.map(cat => {
+    let imageSrc = cat.image;
+    if (!imageSrc || imageSrc === "" || imageSrc === "null") {
+      imageSrc = "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800";
+    }
+    return {
+      name: cat.name,
+      key: cat.name,
+      img: imageSrc,
+      count: getCategoryCount(cat.name)
+    };
+  });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -413,9 +419,9 @@ export default function Home() {
         <div className="container mx-auto px-6 max-w-[1440px]">
           <div className="flex flex-col gap-12 mb-16 px-4">
             <div className="flex flex-col gap-4">
-              <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">Pour tous vos projets</span>
+              <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">Guides Stratégiques</span>
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
-                Des solutions adaptées <br /> à chaque chantier
+                Conseils d&apos;experts <br /> par secteur d&apos;activité
               </h2>
             </div>
           </div>
@@ -426,7 +432,7 @@ export default function Home() {
               { name: "Travaux publics", img: "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800" },
               { name: "Carrières & mines", img: "https://images.pexels.com/photos/2209529/pexels-photo-2209529.jpeg?auto=compress&cs=tinysrgb&w=800" },
               { name: "Industrie", img: "https://images.pexels.com/photos/247763/pexels-photo-247763.jpeg?auto=compress&cs=tinysrgb&w=800" },
-              { name: "Infrastructures", img: "https://images.pexels.com/photos/1098935/pexels-photo-1098935.jpeg?auto=compress&cs=tinysrgb&w=800" },
+              { name: "Infrastructures", img: "https://images.unsplash.com/photo-1590487988256-adb768a48773?auto=compress&cs=tinysrgb&w=800" },
             ].map((sector, i) => (
               <SectorCard key={i} item={sector} index={i} />
             ))}
@@ -591,6 +597,9 @@ function CategoryCard({ item, index }: { item: any; index: number }) {
 }
 
 function EquipmentCard({ item, index }: { item: any; index: number }) {
+  const { reservations: res } = useData();
+  const isRented = (res || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -598,13 +607,18 @@ function EquipmentCard({ item, index }: { item: any; index: number }) {
       transition={{ duration: 0.8, delay: index * 0.15 }}
       viewport={{ once: true }}
     >
-      <Card variant="lowest" className="group flex flex-col border border-surface-container shadow-sm hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] transition-all duration-1000 rounded-[3.5rem] overflow-hidden bg-white">
+      <Card variant="lowest" className="group flex flex-col border border-surface-container shadow-sm hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] transition-all duration-1000 rounded-[3.5rem] overflow-hidden bg-white relative">
+        {isRented && (
+          <div className="absolute top-6 right-6 z-20 px-4 py-2 rounded-xl bg-red-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-200">
+            Loué / En Service
+          </div>
+        )}
         <Link href={`/equipment/${item.id}`} className="relative aspect-[16/11] overflow-hidden m-4 rounded-[2.5rem]">
           <Image 
             src={item.image} 
             alt={item.name} 
             fill
-            className="object-cover transition-transform duration-1000 group-hover:scale-110"
+            className={`object-cover transition-transform duration-1000 group-hover:scale-110 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
           />
           <div className="absolute top-6 left-6 glass-light px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md">{item.category}</div>
           <div className="absolute bottom-6 right-6 w-14 h-14 bg-white/90 backdrop-blur-md rounded-3xl flex items-center justify-center text-secondary hover:text-primary hover:scale-110 transition-all duration-500 cursor-pointer shadow-xl opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
@@ -632,14 +646,19 @@ function EquipmentCard({ item, index }: { item: any; index: number }) {
 
           <div className="flex justify-between items-center bg-surface-low/50 p-6 rounded-3xl">
             <div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-foreground">${item.pricePerDay}</span>
-                <span className="text-xs font-black text-secondary/30 uppercase tracking-widest">/ jour</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl font-black text-foreground">{item.pricePerDay}</span>
+                <span className="text-[11px] font-bold text-secondary/40 uppercase tracking-tight">MAD/jour</span>
               </div>
             </div>
             <Link href={`/equipment/${item.id}`}>
-              <Button variant="primary" size="sm" className="rounded-2xl px-8 h-14 font-black uppercase tracking-widest text-[10px]">
-                Réserver
+              <Button 
+                variant={isRented ? "secondary" : "primary"} 
+                size="sm" 
+                className="rounded-2xl px-8 h-14 font-black uppercase tracking-widest text-[10px]"
+                disabled={isRented}
+              >
+                {isRented ? "Indisponible" : "Réserver"}
               </Button>
             </Link>
           </div>
@@ -650,10 +669,13 @@ function EquipmentCard({ item, index }: { item: any; index: number }) {
 }
 
 function FeaturedMachineCard({ item, index }: { item: any; index: number }) {
+  const { reservations: res } = useData();
+  const isRented = (res || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
-      whileInView={{ opacity: 1, x: 0 }}
+      whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
     >
@@ -662,7 +684,7 @@ function FeaturedMachineCard({ item, index }: { item: any; index: number }) {
           src={item.image} 
           alt={item.name} 
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          className={`object-cover transition-transform duration-700 group-hover:scale-105 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
         />
         
         {/* Dark Gradient Overlay */}
@@ -670,6 +692,11 @@ function FeaturedMachineCard({ item, index }: { item: any; index: number }) {
 
         {/* Content */}
         <div className="absolute inset-0 p-6 flex flex-col justify-end gap-1.5">
+          {isRented && (
+            <div className="mb-auto">
+              <span className="px-3 py-1 rounded bg-red-600 text-white text-[8px] font-black uppercase tracking-widest">Indisponible</span>
+            </div>
+          )}
           <h3 className="text-lg font-bold text-white tracking-tight leading-tight">
             {item.name}
           </h3>
@@ -696,21 +723,28 @@ function SectorCard({ item, index }: { item: any; index: number }) {
       viewport={{ once: true }}
       className="group relative cursor-pointer h-[320px] md:h-[400px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500"
     >
+      <Link href={`/blog?category=${encodeURIComponent(item.name)}`} className="absolute inset-0 z-20" />
       <Image 
         src={item.img} 
         alt={item.name} 
         fill
-        className="object-cover transition-transform duration-1000 group-hover:scale-110"
+        className="object-cover transition-transform duration-[1500ms] group-hover:scale-110"
       />
       
       {/* Dynamic Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
       {/* Content */}
-      <div className="absolute inset-0 p-8 flex flex-col justify-end">
-        <h3 className="text-lg font-bold text-white tracking-tight leading-tight group-hover:translate-x-2 transition-transform duration-500">
-          {item.name}
-        </h3>
+      <div className="absolute inset-0 p-8 flex flex-col justify-end gap-4">
+        <div className="flex flex-col gap-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+          <span className="text-[#f59e0b] font-black uppercase tracking-[0.2em] text-[9px]">Conseil Expert</span>
+          <h3 className="text-xl font-black text-white tracking-tight leading-tight">
+            {item.name}
+          </h3>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center gap-2 text-white/70 text-[10px] font-bold uppercase tracking-widest mt-2">
+            Lire le guide <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
       </div>
     </motion.div>
   );
