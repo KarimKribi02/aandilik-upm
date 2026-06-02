@@ -73,10 +73,16 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
 
   // Fetch single materiel
   useEffect(() => {
+    const materialId = id ? parseInt(id, 10) : null;
+    if (!materialId || isNaN(materialId)) {
+      setFetching(false);
+      return;
+    }
+
     const fetchEquipment = async () => {
       try {
         setFetching(true);
-        const data = await apiFetch(`/materiel/${id}`);
+        const data = await apiFetch(`/materiel/${materialId}`);
         setEquipment(data);
       } catch (err: any) {
         showToast("Impossible de charger cet équipement.", "error");

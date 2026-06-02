@@ -109,6 +109,9 @@ export class MaterielController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
+    if (isNaN(Number(id))) {
+      throw new BadRequestException('Invalid Material ID provided');
+    }
     return this.materielService.findOne(+id);
   }
 
@@ -120,6 +123,9 @@ export class MaterielController {
     @Body() body: Record<string, any>,
     @Request() req: RequestWithUser,
   ) {
+    if (isNaN(Number(id))) {
+      throw new BadRequestException('Invalid Material ID provided');
+    }
     const rawBody = body;
     const materielData = (rawBody.materiel ||
       rawBody) as Partial<CreateMaterielDto>;
@@ -136,6 +142,9 @@ export class MaterielController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @SetMetadata('roles', [UserRole.PROPRIETAIRE, UserRole.ADMINISTRATEUR])
   remove(@Param('id') id: string) {
+    if (isNaN(Number(id))) {
+      throw new BadRequestException('Invalid Material ID provided');
+    }
     return this.materielService.remove(+id);
   }
 }
