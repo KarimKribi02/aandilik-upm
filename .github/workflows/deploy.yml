@@ -1,0 +1,68 @@
+name: Aandilik Ops Automated Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-size: 18
+          cache: 'npm'
+
+      # --- BACKEND BUILD & DEPLOY ---
+      - name: Install & Build Backend
+        run: |
+          cd backend
+          npm install
+          npm run build
+
+      - name: Deploy Backend to VPS (Excluding Local .env)
+        uses: samuelmeuli/action-rsync@v1
+        with:
+          user: root
+          host: ${{ secrets.VPS_HOST }}
+          ssh_private_key: ${{ secrets.VPS_SSH_KEY }}
+          source: "backend/"
+          dest: "/var/www/aandilik/backend/"
+          # EXCLUDE CRUCIAL PRODUCTION ENV FROM BEING OVERWRITTEN
+          args: "--exclude=.env --exclude=node_modules --exclude=src"
+
+      # --- FRONTEND BUILD & DEPLOY ---
+      - name: Install & Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Deploy Frontend to VPS (Excluding Local .env)
+        uses: samuelmeuli/action-rsync@v1
+        with:
+          user: root
+          host: ${{ secrets.VPS_HOST }}
+          ssh_private_key: ${{ secrets.VPS_SSH_KEY }}
+          source: "frontend/"
+          dest: "/var/www/aandilik/frontend/"
+          args: "--exclude=.env --exclude=.next --exclude=node_modules --exclude=src"
+
+      # --- RESTART SERVICES SAFELY ON VPS ---
+      - name: PM2 Production Hot Reload
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/aandilik/backend && npm install --production
+            cd /var/www/aandilik/frontend && npm install --production
+            pm2 restart aandilik-backend --update-env
+            pm2 restart aandilik-frontend --update-env

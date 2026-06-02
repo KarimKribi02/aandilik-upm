@@ -1,0 +1,96 @@
+﻿
+> backend@0.0.1 lint
+> eslint "{src,apps,libs,test}/**/*.ts" --fix
+
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\auth\auth.module.ts
+  16:7  error  Async method 'useFactory' has no 'await' expression  @typescript-eslint/require-await
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\auth\jwt.strategy.ts
+  15:3   error  Async method 'validate' has no 'await' expression  @typescript-eslint/require-await
+  16:14  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  16:30  error  Unsafe member access .sub on an `any` value        @typescript-eslint/no-unsafe-member-access
+  16:35  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  16:50  error  Unsafe member access .email on an `any` value      @typescript-eslint/no-unsafe-member-access
+  16:57  error  Unsafe assignment of an `any` value                @typescript-eslint/no-unsafe-assignment
+  16:71  error  Unsafe member access .role on an `any` value       @typescript-eslint/no-unsafe-member-access
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\auth\roles.guard.ts
+  17:11  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  18:41  error  Unsafe call of an `any` typed value           @typescript-eslint/no-unsafe-call
+  18:46  error  Unsafe member access .role on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\blog\blog.controller.ts
+  31:36  warning  Unsafe argument of type `any` assigned to a parameter of type `Partial<Article>`  @typescript-eslint/no-unsafe-argument
+  37:41  warning  Unsafe argument of type `any` assigned to a parameter of type `Partial<Article>`  @typescript-eslint/no-unsafe-argument
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\demands\demands.controller.ts
+  23:13  error  Unsafe member access .user on an `any` value  @typescript-eslint/no-unsafe-member-access
+  24:7   error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  24:29  error  Unsafe member access .user on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\experts\experts.service.ts
+  14:50  warning  Unsafe argument of type `any` assigned to a parameter of type `DeepPartial<Expert>[]`  @typescript-eslint/no-unsafe-argument
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\mail\mail.service.ts
+  87:13  error    Unsafe assignment of an `any` value                                                                                           @typescript-eslint/no-unsafe-assignment
+  95:55  warning  Unsafe argument of type `any` assigned to a parameter of type `SESTransport.SentMessageInfo | SMTPTransport.SentMessageInfo`  @typescript-eslint/no-unsafe-argument
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\materiel\materiel.controller.ts
+   69:25  error    Unsafe member access .protocol on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+   69:39  error    Unsafe call of an `any` typed value                                                @typescript-eslint/no-unsafe-call
+   69:43  error    Unsafe member access .get on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+   79:11  error    Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+   80:11  error    Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+   80:34  error    Unsafe member access .materiel on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+   81:25  error    Unsafe member access .protocol on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+   81:39  error    Unsafe call of an `any` typed value                                                @typescript-eslint/no-unsafe-call
+   81:43  error    Unsafe member access .get on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+   82:40  warning  Unsafe argument of type `any` assigned to a parameter of type `CreateMaterielDto`  @typescript-eslint/no-unsafe-argument
+   82:58  error    Unsafe member access .user on an `any` value                                       @typescript-eslint/no-unsafe-member-access
+   93:45  warning  Unsafe argument of type `any` assigned to a parameter of type `number`             @typescript-eslint/no-unsafe-argument
+   93:49  error    Unsafe member access .user on an `any` value                                       @typescript-eslint/no-unsafe-member-access
+  105:11  error    Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+  106:11  error    Unsafe assignment of an `any` value                                                @typescript-eslint/no-unsafe-assignment
+  106:34  error    Unsafe member access .materiel on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  107:25  error    Unsafe member access .protocol on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  107:39  error    Unsafe call of an `any` typed value                                                @typescript-eslint/no-unsafe-call
+  107:43  error    Unsafe member access .get on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+  110:7   warning  Unsafe argument of type `any` assigned to a parameter of type `Partial<Materiel>`  @typescript-eslint/no-unsafe-argument
+  111:7   warning  Unsafe argument of type `any` assigned to a parameter of type `number`             @typescript-eslint/no-unsafe-argument
+  111:11  error    Unsafe member access .user on an `any` value                                       @typescript-eslint/no-unsafe-member-access
+  120:45  warning  Unsafe argument of type `any` assigned to a parameter of type `number`             @typescript-eslint/no-unsafe-argument
+  120:49  error    Unsafe member access .user on an `any` value                                       @typescript-eslint/no-unsafe-member-access
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\materiel\materiel.service.ts
+   62:23  error  Unsafe assignment of an `any` value             @typescript-eslint/no-unsafe-assignment
+   62:33  error  Unsafe member access .userId on an `any` value  @typescript-eslint/no-unsafe-member-access
+   62:49  error  Unsafe member access .id on an `any` value      @typescript-eslint/no-unsafe-member-access
+  109:28  error  'ownerId' is defined but never used             @typescript-eslint/no-unused-vars
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\partners\partners.controller.ts
+  25:40  warning  Unsafe argument of type `any` assigned to a parameter of type `Partial<Partner>`  @typescript-eslint/no-unsafe-argument
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\reservations\reservations.controller.ts
+   80:11  error    Unsafe member access .user on an `any` value                            @typescript-eslint/no-unsafe-member-access
+   92:63  warning  Unsafe argument of type `any` assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+   92:67  error    Unsafe member access .user on an `any` value                            @typescript-eslint/no-unsafe-member-access
+  105:49  warning  Unsafe argument of type `any` assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  105:53  error    Unsafe member access .user on an `any` value                            @typescript-eslint/no-unsafe-member-access
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\reservations\reservations.service.ts
+    5:3   error    'UnauthorizedException' is defined but never used                       @typescript-eslint/no-unused-vars
+   60:7   error    Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  103:5   error    'ownerId' is defined but never used                                     @typescript-eslint/no-unused-vars
+  123:64  error    Unsafe member access .message on an `any` value                         @typescript-eslint/no-unsafe-member-access
+  131:11  error    Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  138:35  warning  Unsafe argument of type `any` assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  138:51  error    Unsafe member access .sum on an `any` value                             @typescript-eslint/no-unsafe-member-access
+
+C:\Users\hp\Desktop\aandilik-upm\backend\src\users\users.controller.ts
+  25:38  warning  Unsafe argument of type `any` assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  25:42  error    Unsafe member access .user on an `any` value                            @typescript-eslint/no-unsafe-member-access
+  54:13  error    'password' is assigned a value but never used                           @typescript-eslint/no-unused-vars
+
+Ô£û 63 problems (49 errors, 14 warnings)
+
