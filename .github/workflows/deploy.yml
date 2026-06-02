@@ -1,68 +1,59 @@
-name: Aandilik Ops Automated Production Deployment
+name: Deploy AANDILIK to VPS
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout l-code
+      uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-size: 18
-          cache: 'npm'
+    - name: Deploy Full-Stack App via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: 72.61.198.43
+        username: root
+        password: ${{ secrets.VPS_PASSWORD }}
+        script: |
+          cd /var/www/aandilik
+          
+          # Jib l-koud l-jdid automatique mn GitHub
+          git reset --hard HEAD
+          git pull origin main
 
-      # --- BACKEND BUILD & DEPLOY ---
-      - name: Install & Build Backend
-        run: |
-          cd backend
+          # ----------------------------------------
+          # DEPLOY BACKEND (NestJS)
+          # ----------------------------------------
+          cd /var/www/aandilik/backend
           npm install
+          
+          echo "PORT=3042" > .env
+          echo "DB_HOST=localhost" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_USERNAME=root" >> .env
+          echo "DB_PASSWORD=NewStrongPassword123!" >> .env
+          echo "DB_DATABASE=aandilik" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+
           npm run build
+          pm2 delete aandilik-backend || true
+          pm2 start dist/main.js --name "aandilik-backend" --cwd "/var/www/aandilik/backend" -- env PORT=3042
 
-      - name: Deploy Backend to VPS (Excluding Local .env)
-        uses: samuelmeuli/action-rsync@v1
-        with:
-          user: root
-          host: ${{ secrets.VPS_HOST }}
-          ssh_private_key: ${{ secrets.VPS_SSH_KEY }}
-          source: "backend/"
-          dest: "/var/www/aandilik/backend/"
-          # EXCLUDE CRUCIAL PRODUCTION ENV FROM BEING OVERWRITTEN
-          args: "--exclude=.env --exclude=node_modules --exclude=src"
-
-      # --- FRONTEND BUILD & DEPLOY ---
-      - name: Install & Build Frontend
-        run: |
-          cd frontend
+          # ----------------------------------------
+          # DEPLOY FRONTEND (Next.js)
+          # ----------------------------------------
+          cd /var/www/aandilik/frontend
           npm install
+
+          echo "NEXT_PUBLIC_API_URL=http://api.aandilik.com" > .env
+          echo "PORT=3041" >> .env
+
           npm run build
+          pm2 delete aandilik-frontend || true
+          pm2 start npm --name "aandilik-frontend" --cwd "/var/www/aandilik/frontend" -- run start -- -p 3041
 
-      - name: Deploy Frontend to VPS (Excluding Local .env)
-        uses: samuelmeuli/action-rsync@v1
-        with:
-          user: root
-          host: ${{ secrets.VPS_HOST }}
-          ssh_private_key: ${{ secrets.VPS_SSH_KEY }}
-          source: "frontend/"
-          dest: "/var/www/aandilik/frontend/"
-          args: "--exclude=.env --exclude=.next --exclude=node_modules --exclude=src"
-
-      # --- RESTART SERVICES SAFELY ON VPS ---
-      - name: PM2 Production Hot Reload
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: root
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /var/www/aandilik/backend && npm install --production
-            cd /var/www/aandilik/frontend && npm install --production
-            pm2 restart aandilik-backend --update-env
-            pm2 restart aandilik-frontend --update-env
+          pm2 save
