@@ -7,8 +7,12 @@ import { Footer } from "@/components/layout/Footer";
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
-  title: "Equipment Catalog | Industrial Sophistication",
-  description: "The premium construction equipment rental platform.",
+  title: "Aandilik | Louez le matériel de construction lourd en toute confiance",
+  description: "Plateforme de gestion et location d'engins performants et contrôlés.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
 };
 
 import { DataProvider } from "@/context/DataProvider";

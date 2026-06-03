@@ -57,7 +57,7 @@ export default function ContactPage() {
           
           {/* Breadcrumb Integration */}
           <div className="flex items-center gap-2 text-[11px] font-bold tracking-widest uppercase mb-12 text-gray-400">
-            <Link href="/" className="hover:text-[#FFB800] transition-colors">Accueil</Link>
+            <Link href="/" className="hover:text-[#f7941d] transition-colors">Accueil</Link>
             <ChevronRight size={12} />
             <span className="text-gray-900">Contact</span>
           </div>
@@ -73,7 +73,7 @@ export default function ContactPage() {
                   {offices.map((office, i) => (
                     <div key={i} className="bg-white rounded-[24px] p-8 border border-gray-100 shadow-[0_8px_30px_-10px_rgba(0,0,0,0.04)]">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="w-8 h-8 rounded-lg bg-[#FFF9EA] text-[#FFB800] flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#f7941d] flex items-center justify-center">
                           <MapPin size={16} strokeWidth={2.5} />
                         </div>
                         <h4 className="font-black text-sm text-gray-900">{office.title}</h4>
@@ -98,15 +98,15 @@ export default function ContactPage() {
               </div>
 
               <div className="bg-[#151719] rounded-[32px] p-10 flex flex-col gap-6 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FFB800]/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
-                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-[#FFB800]">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#f7941d]/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700" />
+                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-[#f7941d]">
                   <MessageSquare size={24} />
                 </div>
                 <h4 className="font-black text-lg text-white">Support Technique</h4>
                 <p className="text-[11px] font-semibold text-gray-400 leading-relaxed">
                   Des questions complexes sur la mécanique ou la logistique lourde ? Contactez directement nos ingénieurs.
                 </p>
-                <div className="flex items-center gap-2 text-[10px] font-black text-[#FFB800] uppercase tracking-widest mt-2">
+                <div className="flex items-center gap-2 text-[10px] font-black text-[#f7941d] uppercase tracking-widest mt-2">
                   <Mail size={12} /> support-tech@aandilik.ma
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function ContactPage() {
                           type="text" 
                           required
                           placeholder="Ex: Ahmed Benani"
-                          className="w-full h-14 bg-gray-50 rounded-xl px-5 outline-none focus:ring-2 focus:ring-[#FFB800]/20 border border-gray-100 transition-all text-sm font-semibold"
+                          className="w-full h-14 bg-gray-50 rounded-xl px-5 outline-none focus:ring-2 focus:ring-[#f7941d]/20 border border-gray-100 transition-all text-sm font-semibold"
                         />
                       </div>
                       <div className="flex flex-col gap-3">
@@ -137,14 +137,14 @@ export default function ContactPage() {
                           type="email" 
                           required
                           placeholder="ahmed@entreprise.ma"
-                          className="w-full h-14 bg-gray-50 rounded-xl px-5 outline-none focus:ring-2 focus:ring-[#FFB800]/20 border border-gray-100 transition-all text-sm font-semibold"
+                          className="w-full h-14 bg-gray-50 rounded-xl px-5 outline-none focus:ring-2 focus:ring-[#f7941d]/20 border border-gray-100 transition-all text-sm font-semibold"
                         />
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-3">
                       <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Type de demande</label>
-                      <select className="w-full h-14 bg-gray-50 rounded-xl px-5 outline-none focus:ring-2 focus:ring-[#FFB800]/20 border border-gray-100 transition-all text-sm font-semibold appearance-none cursor-pointer">
+                      <select className="w-full h-14 bg-gray-50 rounded-xl px-5 outline-none focus:ring-2 focus:ring-[#f7941d]/20 border border-gray-100 transition-all text-sm font-semibold appearance-none cursor-pointer">
                         <option>Location de matériel</option>
                         <option>Support technique</option>
                         <option>Partenariat</option>
@@ -158,7 +158,7 @@ export default function ContactPage() {
                         rows={5}
                         required
                         placeholder="Dites-nous en plus sur vos besoins..."
-                        className="w-full bg-gray-50 rounded-xl p-5 outline-none focus:ring-2 focus:ring-[#FFB800]/20 border border-gray-100 transition-all text-sm font-semibold resize-none"
+                        className="w-full bg-gray-50 rounded-xl p-5 outline-none focus:ring-2 focus:ring-[#f7941d]/20 border border-gray-100 transition-all text-sm font-semibold resize-none"
                       />
                     </div>
 
@@ -167,11 +167,11 @@ export default function ContactPage() {
                       disabled={loading || isSent}
                       className={cn(
                         "h-16 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 overflow-hidden relative",
-                        isSent ? "bg-green-500 text-white" : "bg-[#FFB800] hover:bg-[#f0ad00] text-gray-900"
+                        isSent ? "bg-green-500 text-white" : "bg-[#f7941d] hover:bg-[#e08316] text-white font-bold"
                       )}
                     >
                       {loading ? (
-                        <div className="w-5 h-5 border-2 border-gray-900/20 border-t-gray-900 rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                       ) : isSent ? (
                         <div className="flex items-center gap-2">
                           <ShieldCheck size={18} /> Message Envoyé
@@ -186,7 +186,7 @@ export default function ContactPage() {
                 </div>
                 
                 {/* Background Decor */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-[#FFF9EA] rounded-full blur-[100px] -mr-32 -mt-32 opacity-50" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50" />
               </div>
             </div>
 
@@ -201,14 +201,14 @@ export default function ContactPage() {
             {/* Dark Overlay with Content */}
             <div className="absolute inset-0 bg-[#151719]/40 backdrop-blur-[2px] z-10 flex items-center justify-center text-center p-10">
               <div className="max-w-xl">
-                <div className="w-16 h-16 rounded-2xl bg-[#FFB800] text-gray-900 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                <div className="w-16 h-16 rounded-2xl bg-[#f7941d] text-zinc-950 flex items-center justify-center mx-auto mb-6 shadow-2xl">
                   <MapPin size={32} />
                 </div>
                 <h3 className="text-3xl font-black text-white tracking-tight mb-4">Notre réseau au Maroc</h3>
                 <p className="text-sm font-semibold text-white/90 leading-relaxed mb-8">
                   Nous couvrons plus de 20 villes à travers le royaume pour vous garantir une livraison rapide et un support de proximité.
                 </p>
-                <Link href="/equipment" className="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-[#FFB800] hover:text-white transition-colors group">
+                <Link href="/equipment" className="inline-flex items-center gap-3 text-[11px] font-black uppercase tracking-widest text-[#f7941d] hover:text-white transition-colors group">
                   Voir les matériels par ville <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>

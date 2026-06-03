@@ -31,6 +31,19 @@ export default function ListingPage() {
     ...categories.map(cat => ({ key: cat.name, label: cat.name }))
   ];
 
+  const categoriesList = categories.map(cat => {
+    let imageSrc = cat.image;
+    if (!imageSrc || imageSrc === "" || imageSrc === "null") {
+      imageSrc = "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800";
+    }
+    return {
+      name: cat.name,
+      key: cat.name,
+      img: imageSrc,
+      count: getCategoryCount(cat.name)
+    };
+  });
+
   // Immediate UI states (for instant slider movement and typing feedback)
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCity, setActiveCity] = useState("");
@@ -347,8 +360,77 @@ export default function ListingPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 pb-32">
-      {/* Header section with cover image */}
-      <section className="relative bg-white pt-10 pb-32">
+      {/* Mobile Top Header (only on mobile viewports) */}
+      <div className="md:hidden sticky top-0 bg-white z-40 border-b border-slate-100 px-4 py-3 flex flex-col gap-3">
+        {/* Top Title Area */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-gray-600 hover:text-[#f7941d] transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </Link>
+            <div className="flex flex-col">
+              <h1 className="text-sm font-black text-gray-900">
+                {activeCategory === "Tous" ? "Tous les matériels" : activeCategory}
+              </h1>
+              <span className="text-[10px] font-bold text-gray-400">
+                {filteredEquipment.length} équipement{filteredEquipment.length > 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+          <button 
+            onClick={() => setIsMobileFilterOpen(true)}
+            className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-700 border border-slate-200"
+          >
+            <SlidersHorizontal size={14} />
+          </button>
+        </div>
+
+        {/* Search Input on Mobile */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          <input 
+            type="text" 
+            placeholder="Rechercher un équipement..." 
+            value={searchQuery} 
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-100 rounded-xl outline-none text-xs font-semibold text-gray-800 focus:bg-white focus:border-[#f7941d]/30 transition-all" 
+          />
+        </div>
+
+        {/* Sticky horizontal filter triggers */}
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setIsMobileFilterOpen(true)}
+            className="flex-1 h-11 border border-gray-100 bg-white rounded-xl px-4 flex items-center justify-between text-left text-xs font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-all"
+          >
+            <div className="flex flex-col">
+              <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider leading-none">Trier par</span>
+              <span className="text-[10px] font-black text-gray-900 mt-0.5">Popularité</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-400">
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+            </svg>
+          </button>
+          
+          <button 
+            onClick={() => setIsMobileFilterOpen(true)}
+            className="flex-1 h-11 border border-gray-100 bg-white rounded-xl px-4 flex items-center justify-between text-left text-xs font-semibold text-gray-700 shadow-sm active:scale-[0.98] transition-all"
+          >
+            <div className="flex flex-col">
+              <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wider leading-none">Filtrer</span>
+              <span className="text-[10px] font-black text-gray-900 mt-0.5">Tous les filtres</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-400">
+              <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Header section with cover image */}
+      <section className="relative bg-white pt-10 pb-32 hidden md:block">
         <div className="absolute right-0 top-0 bottom-0 w-[85%] lg:w-[95%] pointer-events-none hidden md:block overflow-hidden" style={{ zIndex: 0 }}>
           <div className="absolute inset-y-0 left-0 w-1/2 lg:w-[60%] bg-gradient-to-r from-white via-white/80 to-transparent z-10" />
           <Image 
@@ -425,8 +507,53 @@ export default function ListingPage() {
         </div>
       </section>
 
+      {/* Categories chips horizontal carousel (only on mobile viewports) */}
+      <div className="md:hidden px-4 mt-6 overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xs font-black uppercase tracking-widest text-slate-900">
+            Catégories
+          </h2>
+          <button 
+            onClick={() => {
+              setActiveCategory("Tous");
+              setDebouncedCategory("Tous");
+            }} 
+            className="text-[10px] font-bold text-[#f7941d]"
+          >
+            Voir tout
+          </button>
+        </div>
+        <div className="flex overflow-x-auto gap-4 snap-x pb-2 scrollbar-none" style={{ scrollbarWidth: "none" }}>
+          {categoriesList.map((cat, i) => (
+            <button 
+              key={i}
+              onClick={() => {
+                setActiveCategory(cat.key);
+                setDebouncedCategory(cat.key);
+              }}
+              className={`flex flex-col items-center p-3 rounded-2xl bg-white border min-w-[120px] snap-start transition-all ${
+                activeCategory === cat.key 
+                  ? 'border-[#f7941d] shadow-sm shadow-orange-500/10' 
+                  : 'border-gray-100 hover:border-gray-200'
+              }`}
+            >
+              <div className="w-12 h-10 relative mb-2 flex items-center justify-center">
+                <Image 
+                  src={cat.img} 
+                  alt={cat.name} 
+                  fill 
+                  className="object-contain" 
+                />
+              </div>
+              <span className="text-[10px] font-black text-gray-900 leading-tight text-center truncate w-full">{cat.name}</span>
+              <span className="text-[8px] font-bold text-gray-400 mt-0.5">{cat.count} équipement{cat.count > 1 ? 's' : ''}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Main Grid Content */}
-      <div className="container mx-auto px-6 max-w-7xl mt-48 md:mt-32 xl:mt-24 relative z-10">
+      <div className="container mx-auto px-4 md:px-6 max-w-7xl mt-6 md:mt-32 xl:mt-24 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           
           {/* Sidebar - Desktop only */}
@@ -445,12 +572,36 @@ export default function ListingPage() {
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 xl:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 xl:gap-8">
               {filteredEquipment.map((item: any) => {
                 const isCurrentlyRented = (reservations || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
                 return <EquipmentResultCard key={item.id} item={item} isRented={isCurrentlyRented} />;
               })}
             </div>
+
+            {/* Modern Mobile Pagination */}
+            {filteredEquipment.length > 0 && (
+              <div className="flex items-center justify-center gap-2.5 mt-12">
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#f7941d] text-zinc-950 font-black text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer">
+                  1
+                </button>
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-slate-700 hover:border-gray-300 font-bold text-xs transition-all cursor-pointer">
+                  2
+                </button>
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-slate-700 hover:border-gray-300 font-bold text-xs transition-all cursor-pointer">
+                  3
+                </button>
+                <span className="text-gray-400 font-bold text-xs px-1">...</span>
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-slate-700 hover:border-gray-300 font-bold text-xs transition-all cursor-pointer">
+                  5
+                </button>
+                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-slate-700 hover:border-gray-300 font-bold text-xs transition-all cursor-pointer active:scale-95">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              </div>
+            )}
 
             {filteredEquipment.length === 0 && !isLoading && (
               <div className="py-24 bg-white rounded-3xl border border-slate-200/50 flex flex-col items-center justify-center text-center p-8 shadow-sm">
@@ -618,50 +769,94 @@ function EquipmentResultCard({ item, isRented }: { item: any; isRented: boolean 
   const isAvailable = item.status === "active" && !isRented;
   
   return (
-    <Card variant="lowest" className="group rounded-[20px] overflow-hidden border border-slate-200/50 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] transition-all duration-300 bg-white flex flex-col h-full">
-      <Link href={`/equipment/${item.id}`} className="relative aspect-[4/3] overflow-hidden block">
-        <Image 
-          src={item.image || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800"} 
-          alt={item.name} 
-          fill
-          className={`object-cover transition-transform duration-700 group-hover:scale-105 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
-        />
-        {/* Availability Badge */}
-        <div className={`absolute bottom-3 left-3 px-3 py-1 rounded-full text-[9px] font-black tracking-wide uppercase shadow-sm ${
+    <div className="group relative bg-white rounded-2xl border border-gray-100 transition-all p-3 md:p-0 md:rounded-[20px] md:overflow-hidden md:border-slate-200/50 md:shadow-[0_4px_20px_-10px_rgba(0,0,0,0.03)] md:hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] flex flex-row md:flex-col h-auto md:h-full gap-4 md:gap-0">
+      
+      {/* Left Section (Image): place transparent machinery image in constrained wrapper */}
+      <div className="w-32 h-24 relative flex-shrink-0 md:w-full md:h-auto md:aspect-[4/3] md:flex-shrink overflow-hidden rounded-xl md:rounded-none bg-slate-50 flex items-center justify-center">
+        <Link href={`/equipment/${item.id}`} className="w-full h-full relative block">
+          <Image 
+            src={item.image || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800"} 
+            alt={item.name} 
+            fill
+            className={`object-contain md:object-cover transition-transform duration-700 group-hover:scale-105 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
+          />
+        </Link>
+        {/* Availability Badge on Desktop */}
+        <div className={`hidden md:block absolute bottom-3 left-3 px-3 py-1 rounded-full text-[9px] font-black tracking-wide uppercase shadow-sm ${
           isAvailable ? 'bg-green-950 text-green-400 border border-green-900/50' : 'bg-red-950 text-red-400 border border-red-900/50'
         }`}>
-          {isRented ? 'Loué / En Service' : isAvailable ? 'Disponible' : 'Maintenance'}
+          {isRented ? 'Loué' : isAvailable ? 'Disponible' : 'Sur demande'}
         </div>
-      </Link>
+      </div>
 
-      <div className="p-5 flex flex-col gap-3 flex-1 bg-white">
-        <h3 className="text-sm font-black tracking-tight leading-snug text-slate-900 group-hover:text-[#f7941d] transition-colors flex-1">
-          {item.name}
-        </h3>
+      {/* Wishlist/heart floating line icon */}
+      <button 
+        onClick={(e) => {
+          e.preventDefault();
+        }}
+        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 md:bg-white backdrop-blur-sm border border-gray-100 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors shadow-sm cursor-pointer z-10"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+        </svg>
+      </button>
 
-        <div className="grid grid-cols-2 gap-2 mt-1">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Poids</span>
-            <span className="text-xs font-bold text-slate-800">{item.poids_operationnel || 22.5} t</span>
+      {/* Right Section (Metadata Stack) */}
+      <div className="flex-1 flex flex-col justify-between py-0.5 md:p-5 bg-white">
+        <div className="flex flex-col gap-1">
+          {/* Equipment Title */}
+          <h3 className="text-xs md:text-sm font-black tracking-tight leading-snug text-slate-900 group-hover:text-[#f7941d] transition-colors line-clamp-1 pr-6 md:pr-0">
+            {item.name}
+          </h3>
+
+          {/* Subtitle / Category */}
+          <span className="text-[9px] text-gray-400 font-bold block md:hidden">
+            {item.category}
+          </span>
+
+          {/* Availability Soft Badge on Mobile */}
+          <div className="flex md:hidden mt-0.5">
+            <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide ${
+              isAvailable 
+                ? 'bg-green-50 text-green-600 border border-green-100' 
+                : 'bg-orange-50 text-[#f7941d] border border-orange-100'
+            }`}>
+              {isRented ? 'Loué' : isAvailable ? 'Disponible' : 'Sur demande'}
+            </span>
           </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Godet</span>
-            <span className="text-xs font-bold text-slate-800">{item.capacite_godet || "1.2 m³"}</span>
+
+          {/* Minimalist Gray Micro-chips Parameters */}
+          <div className="flex gap-2 mt-1.5 flex-wrap">
+            <span className="bg-slate-50 border border-slate-100/70 text-slate-500 text-[9px] font-black uppercase tracking-tight px-2 py-0.5 rounded-md flex items-center gap-1">
+              <svg className="w-2.5 h-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              </svg>
+              {item.poids_operationnel || 22.5} t
+            </span>
+            <span className="bg-slate-50 border border-slate-100/70 text-slate-500 text-[9px] font-black uppercase tracking-tight px-2 py-0.5 rounded-md flex items-center gap-1">
+              <svg className="w-2.5 h-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              2022
+            </span>
           </div>
         </div>
 
-        <div className="flex justify-between items-end mt-4 pt-4 border-t border-slate-100">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-slate-900 text-2xl font-black">{item.pricePerDay}</span>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tight">MAD/jour</span>
+        {/* Pricing Info */}
+        <div className="flex justify-between items-baseline md:items-end mt-2 md:mt-4 pt-1 md:pt-4 md:border-t md:border-slate-100">
+          <div className="flex items-baseline gap-1">
+            <span className="text-slate-900 text-sm md:text-2xl font-black">{item.pricePerDay}</span>
+            <span className="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-tight">DH / jour</span>
           </div>
-          <Link href={`/equipment/${item.id}`}>
+          <Link href={`/equipment/${item.id}`} className="hidden md:block">
             <button className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:border-[#f7941d] hover:bg-[#f7941d] hover:text-zinc-950 transition-all cursor-pointer active:scale-95">
-              <ArrowRight size={14} strokeWidth={2.5} />
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </button>
           </Link>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }

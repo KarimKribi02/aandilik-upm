@@ -66,7 +66,8 @@ export class MailService {
     endDate: string,
     totalPrice: number,
   ): Promise<boolean> {
-    const trackingUrl = `http://localhost:3000/track?code=${trackingCode}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const trackingUrl = `${frontendUrl}/track?code=${trackingCode}`;
     const htmlContent = `
       <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: auto; padding: 0; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
         <!-- Header -->
@@ -137,7 +138,8 @@ export class MailService {
     endDate: string,
     totalPrice: number,
   ): Promise<boolean> {
-    const dashboardUrl = 'http://localhost:3000/dashboard/owner/reservations';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const dashboardUrl = `${frontendUrl}/dashboard/owner/reservations`;
     const htmlContent = `
       <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: auto; padding: 0; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
         <!-- Header -->
@@ -202,7 +204,8 @@ export class MailService {
     equipmentName: string,
     trackingCode: string,
   ): Promise<boolean> {
-    const trackingUrl = `http://localhost:3000/track?code=${trackingCode}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const trackingUrl = `${frontendUrl}/track?code=${trackingCode}`;
     const isApproved = status.toUpperCase() === 'APPROVED' || status === 'confirmée';
     const statusText = isApproved ? 'APPROUVÉE' : 'REFUSÉE';
     const statusColor = isApproved ? '#16a34a' : '#dc2626';
@@ -262,7 +265,8 @@ export class MailService {
     equipmentName: string,
     trackingCode: string,
   ): Promise<boolean> {
-    const trackingUrl = `http://localhost:3000/track?code=${trackingCode}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const trackingUrl = `${frontendUrl}/track?code=${trackingCode}`;
     const htmlContent = `
       <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: auto; padding: 0; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
         <!-- Header -->

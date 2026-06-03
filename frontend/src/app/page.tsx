@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, GlassContainer } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -44,6 +44,28 @@ export default function Home() {
   const [isDemandModalOpen, setIsDemandModalOpen] = useState(false);
   const router = useRouter();
   const { showToast } = useToast();
+
+  const [activeEquipScrollIdx, setActiveEquipScrollIdx] = useState(0);
+  const equipScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleEquipScroll = () => {
+    if (equipScrollRef.current) {
+      const { scrollLeft, clientWidth } = equipScrollRef.current;
+      const index = Math.round(scrollLeft / clientWidth);
+      setActiveEquipScrollIdx(index);
+    }
+  };
+
+  const [activeArticleScrollIdx, setActiveArticleScrollIdx] = useState(0);
+  const articleScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleArticleScroll = () => {
+    if (articleScrollRef.current) {
+      const { scrollLeft, clientWidth } = articleScrollRef.current;
+      const index = Math.round(scrollLeft / clientWidth);
+      setActiveArticleScrollIdx(index);
+    }
+  };
 
   const featured = (equipment || []).filter(e => e.status === "active").slice(0, 3);
 
@@ -135,33 +157,33 @@ export default function Home() {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-col gap-6 w-full max-w-6xl mt-4"
+              className="flex flex-col gap-6 w-full max-w-6xl mt-4 px-4 sm:px-0"
             >
               <div className="bg-black/40 backdrop-blur-3xl p-6 md:p-8 rounded-[2rem] border border-white/10 shadow-2xl">
-                <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <form onSubmit={handleSearch} className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
                   {/* Search Query */}
-                  <div className="md:col-span-3 flex flex-col gap-2">
+                  <div className="col-span-1 lg:col-span-3 flex flex-col gap-2">
                     <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Rechercher</label>
                     <div className="relative group">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#f59e0b]" size={18} />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#f7941d]" size={18} />
                       <input 
                         type="text" 
                         placeholder="Rechercher un matériel..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-14 pl-12 pr-4 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all placeholder:text-gray-400"
+                        className="w-full h-14 pl-12 pr-4 bg-white rounded-xl text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f7941d]/50 shadow-sm border border-gray-100 hover:shadow-md transition-all placeholder:text-gray-400"
                       />
                     </div>
                   </div>
 
                   {/* Category */}
-                  <div className="md:col-span-3 flex flex-col gap-2">
+                  <div className="col-span-1 lg:col-span-3 flex flex-col gap-2">
                     <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Catégorie</label>
                     <div className="relative group">
                       <select 
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="w-full h-14 px-4 pr-10 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all appearance-none cursor-pointer"
+                        className="w-full h-14 px-4 pr-10 bg-white rounded-xl text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f7941d]/50 shadow-sm border border-gray-100 hover:shadow-md transition-all appearance-none cursor-pointer"
                       >
                         <option value="Toutes catégories">Toutes catégories</option>
                         {categories.map((cat, i) => (
@@ -177,41 +199,40 @@ export default function Home() {
                   </div>
 
                   {/* Location */}
-                  <div className="md:col-span-2 flex flex-col gap-2">
+                  <div className="col-span-1 lg:col-span-2 flex flex-col gap-2">
                     <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Localisation</label>
                     <div className="relative group">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#f59e0b]" size={18} />
+                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#f7941d]" size={18} />
                       <input 
                         type="text" 
                         placeholder="Casablanca..."
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
-                        className="w-full h-14 pl-12 pr-4 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all placeholder:text-gray-400"
+                        className="w-full h-14 pl-12 pr-4 bg-white rounded-xl text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f7941d]/50 shadow-sm border border-gray-100 hover:shadow-md transition-all placeholder:text-gray-400"
                       />
                     </div>
                   </div>
 
                   {/* Max Price */}
-                  <div className="md:col-span-2 flex flex-col gap-2">
+                  <div className="col-span-1 lg:col-span-2 flex flex-col gap-2">
                     <label className="text-[11px] font-bold text-white uppercase tracking-wider ml-1">Prix max</label>
                     <input 
                       type="number" 
                       placeholder="DH / jour"
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
-                      className="w-full h-14 px-4 bg-white rounded-lg text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f59e0b]/50 transition-all placeholder:text-gray-400 font-bold"
+                      className="w-full h-14 px-4 bg-white rounded-xl text-sm font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-[#f7941d]/50 shadow-sm border border-gray-100 hover:shadow-md transition-all placeholder:text-gray-400 font-bold"
                     />
                   </div>
 
                   {/* Submit */}
-                  <div className="md:col-span-2">
-                    <Button type="submit" className="w-full h-14 rounded-lg bg-[#f59e0b] hover:bg-[#f59e0b]/90 text-zinc-950 font-black flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 cursor-pointer uppercase tracking-widest text-[10px]">
+                  <div className="col-span-1 lg:col-span-2 w-full">
+                    <Button type="submit" className="w-full h-14 rounded-xl bg-[#f7941d] hover:bg-[#f7941d]/90 text-zinc-950 font-black flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] cursor-pointer uppercase tracking-widest text-[10px]">
                       Rechercher &rarr;
                     </Button>
                   </div>
                 </form>
               </div>
-
             </motion.div>
           </div>
         </div>
@@ -222,9 +243,9 @@ export default function Home() {
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
             {/* Item 1 */}
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-[#f59e0b]/10 flex items-center justify-center flex-shrink-0">
-                <ShieldCheck className="text-[#f59e0b]" size={28} />
+            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5">
+              <div className="w-16 h-16 rounded-full bg-[#f7941d]/10 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="text-[#f7941d]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-gray-900 text-base">Sécurisé & Fiable</h3>
@@ -233,9 +254,9 @@ export default function Home() {
             </div>
 
             {/* Item 2 */}
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-[#f59e0b]/10 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="text-[#f59e0b]" size={28} />
+            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5">
+              <div className="w-16 h-16 rounded-full bg-[#f7941d]/10 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="text-[#f7941d]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-gray-900 text-base">Matériel vérifié</h3>
@@ -244,9 +265,9 @@ export default function Home() {
             </div>
 
             {/* Item 3 */}
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-[#f59e0b]/10 flex items-center justify-center flex-shrink-0">
-                <Zap className="text-[#f59e0b]" size={28} />
+            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5">
+              <div className="w-16 h-16 rounded-full bg-[#f7941d]/10 flex items-center justify-center flex-shrink-0">
+                <Zap className="text-[#f7941d]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-gray-900 text-base">Support 24/7</h3>
@@ -255,9 +276,9 @@ export default function Home() {
             </div>
 
             {/* Item 4 */}
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-full bg-[#f59e0b]/10 flex items-center justify-center flex-shrink-0">
-                <Users className="text-[#f59e0b]" size={28} />
+            <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5">
+              <div className="w-16 h-16 rounded-full bg-[#f7941d]/10 flex items-center justify-center flex-shrink-0">
+                <Users className="text-[#f7941d]" size={28} />
               </div>
               <div className="flex flex-col gap-1">
                 <h3 className="font-bold text-gray-900 text-base">Des milliers d&apos;utilisateurs</h3>
@@ -321,19 +342,47 @@ export default function Home() {
             </div>
 
             {/* Right Cards Slider Area */}
-            <div className="lg:w-2/3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="lg:w-2/3 flex flex-col gap-6">
+              {/* Desktop/Tablet Grid */}
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {(featured || []).slice(0, 3).map((item, i) => (
                   <FeaturedMachineCard key={item.id} item={item} index={i} />
                 ))}
               </div>
+
+              {/* Mobile Swipe Carousel with Indicator Dots */}
+              <div className="block md:hidden">
+                <div 
+                  ref={equipScrollRef}
+                  onScroll={handleEquipScroll}
+                  className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-6 scrollbar-none"
+                  style={{ scrollbarWidth: "none" }}
+                >
+                  {(featured || []).slice(0, 3).map((item, i) => (
+                    <div key={item.id} className="w-[80vw] shrink-0 snap-center">
+                      <FeaturedMachineCard item={item} index={i} />
+                    </div>
+                  ))}
+                </div>
+                {/* Dots indicator */}
+                <div className="flex justify-center gap-1.5 mt-2">
+                  {(featured || []).slice(0, 3).map((_, idx) => (
+                    <span 
+                      key={idx} 
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        activeEquipScrollIdx === idx ? 'bg-[#f7941d] w-4' : 'bg-slate-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
               
-              {/* Slider Nav */}
-              <div className="flex justify-end gap-3 mt-12">
+              {/* Slider Nav (only visible on desktop/tablet) */}
+              <div className="hidden md:flex justify-end gap-3 mt-6">
                 <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 cursor-not-allowed">
                   <ArrowRight size={20} className="rotate-180" />
                 </div>
-                <div className="w-12 h-12 rounded-full bg-[#f59e0b] flex items-center justify-center text-black shadow-lg shadow-[#f59e0b]/20 cursor-pointer hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-full bg-[#f7941d] flex items-center justify-center text-black shadow-lg shadow-[#f7941d]/20 cursor-pointer hover:scale-110 transition-transform">
                   <ArrowRight size={20} />
                 </div>
               </div>
@@ -475,8 +524,8 @@ export default function Home() {
       </section>
 
       {/* Final CTA Banner - High Impact Version */}
-      <section className="bg-white pb-32">
-        <div className="container mx-auto px-6 max-w-[1440px]">
+      <section className="bg-white pb-32 px-4 sm:px-0">
+        <div className="container mx-auto max-w-[1440px]">
           <div className="relative h-[480px] rounded-[3.5rem] overflow-hidden shadow-2xl group">
             {/* Background Image */}
             <Image 
@@ -486,11 +535,11 @@ export default function Home() {
               className="object-cover object-center"
             />
             
-            {/* Lighted Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/10 to-transparent" />
+            {/* Lighted Gradient Overlay (Vertical on mobile, horizontal on desktop) */}
+            <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-black/80 via-black/50 md:from-black/60 md:via-black/20 to-transparent" />
 
             {/* Content */}
-            <div className="relative z-10 h-full flex flex-col justify-center px-10 md:px-16 gap-6 max-w-2xl">
+            <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-16 gap-6 max-w-2xl mx-auto md:mx-0 text-center md:text-left items-center md:items-start">
               <div className="flex flex-col gap-2">
                 <span className="text-white/80 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs">
                   Vous ne trouvez pas le matériel qu&apos;il vous faut ?
@@ -506,10 +555,10 @@ export default function Home() {
               <div className="pt-4">
                 <Button 
                   onClick={() => setIsDemandModalOpen(true)}
-                  className="h-16 px-10 rounded-2xl bg-[#f59e0b] text-black font-black flex items-center gap-4 shadow-2xl transition-all duration-500 hover:scale-105 group/btn"
+                  className="h-16 px-10 rounded-2xl bg-[#f7941d] text-zinc-950 font-black flex items-center gap-4 shadow-2xl transition-all duration-500 hover:scale-105 group/btn"
                 >
                   <span className="text-base tracking-tight">Publier une demande</span>
-                  <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center text-[#f59e0b] transition-transform duration-500 group-hover/btn:translate-x-1 group-hover/btn:rotate-12">
+                  <div className="w-8 h-8 rounded-xl bg-black flex items-center justify-center text-[#f7941d] transition-transform duration-500 group-hover/btn:translate-x-1 group-hover/btn:rotate-12">
                     <ArrowRight size={18} />
                   </div>
                 </Button>
@@ -519,28 +568,56 @@ export default function Home() {
         </div>
       </section>
       {/* Blog Section */}
-      <section className="bg-[#fcfcfc] py-32">
+      <section className="bg-[#fcfcfc] py-32 overflow-hidden">
         <div className="container mx-auto px-6 max-w-[1440px]">
           <div className="flex justify-between items-end mb-16 px-4">
             <div className="flex flex-col gap-4">
-              <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">Conseils & Actualités</span>
+              <span className="text-[#f7941d] font-black uppercase tracking-[0.3em] text-[10px]">Conseils & Actualités</span>
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
                 Nos derniers articles
               </h2>
             </div>
-            <Link href="/blog" className="hidden md:flex items-center gap-3 text-gray-400 font-bold hover:text-[#f59e0b] transition-colors group mb-2">
+            <Link href="/blog" className="hidden md:flex items-center gap-3 text-gray-400 font-bold hover:text-[#f7941d] transition-colors group mb-2">
               Voir tous les articles <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+          {/* Desktop/Tablet Grid */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
             {latestArticles.map((article, i) => (
               <BlogCard key={article.id} item={article} index={i} />
             ))}
           </div>
 
+          {/* Mobile Swipe Carousel with Indicator Dots */}
+          <div className="block md:hidden px-4">
+            <div 
+              ref={articleScrollRef}
+              onScroll={handleArticleScroll}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-6 scrollbar-none"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {latestArticles.map((article, i) => (
+                <div key={article.id} className="w-[80vw] shrink-0 snap-center">
+                  <BlogCard item={article} index={i} />
+                </div>
+              ))}
+            </div>
+            {/* Dots indicator */}
+            <div className="flex justify-center gap-1.5 mt-2">
+              {latestArticles.map((_, idx) => (
+                <span 
+                  key={idx} 
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    activeArticleScrollIdx === idx ? 'bg-[#f7941d] w-4' : 'bg-slate-300'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
           <div className="flex justify-center mt-12 md:hidden">
-            <Link href="/blog" className="flex items-center gap-3 text-gray-400 font-bold hover:text-[#f59e0b] transition-colors group">
+            <Link href="/blog" className="flex items-center gap-3 text-gray-400 font-bold hover:text-[#f7941d] transition-colors group">
               Voir tous les articles <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
