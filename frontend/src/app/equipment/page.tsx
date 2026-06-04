@@ -24,25 +24,29 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiFetch } from "@/lib/api";
 
 export default function ListingPage() {
-  const { equipment, categories, reservations } = useData();
+  const { equipment = [], categories = [], reservations = [] } = useData() || {};
   
   const dynamicSidebarCategories = [
     { key: "Tous", label: "Tous les matériels" },
-    ...categories.map(cat => ({ key: cat.name, label: cat.name }))
+    ...(Array.isArray(categories) 
+      ? categories.map(cat => ({ key: cat?.name || "", label: cat?.name || "" })) 
+      : [])
   ];
 
-  const categoriesList = categories.map(cat => {
-    let imageSrc = cat.image;
-    if (!imageSrc || imageSrc === "" || imageSrc === "null") {
-      imageSrc = "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800";
-    }
-    return {
-      name: cat.name,
-      key: cat.name,
-      img: imageSrc,
-      count: getCategoryCount(cat.name)
-    };
-  });
+  const categoriesList = Array.isArray(categories) 
+    ? categories.map(cat => {
+        let imageSrc = cat?.image;
+        if (!imageSrc || imageSrc === "" || imageSrc === "null") {
+          imageSrc = "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800";
+        }
+        return {
+          name: cat?.name || "",
+          key: cat?.name || "",
+          img: imageSrc,
+          count: getCategoryCount(cat?.name || "")
+        };
+      }) 
+    : [];
 
   // Immediate UI states (for instant slider movement and typing feedback)
   const [searchQuery, setSearchQuery] = useState("");
@@ -138,8 +142,8 @@ export default function ListingPage() {
         const rawData = await apiFetch(url);
         
         if (active) {
-          const transformed = rawData.map((item: any) => {
-            const rawImage = (item.images || item.image || "") as string;
+          const transformed = Array.isArray(rawData) ? rawData.map((item: any) => {
+            const rawImage = (item?.images || item?.image || "") as string;
             const isValidImage = rawImage && 
                                 rawImage !== "null" && 
                                 rawImage !== "undefined" && 
@@ -149,26 +153,26 @@ export default function ListingPage() {
               : "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800";
 
             return {
-              id: item.id.toString(),
-              ownerId: item.proprietaire?.id?.toString() || "",
-              name: item.nom_equipement,
-              category: (item.categorie || "Earthmoving"),
-              pricePerDay: item.prix_location,
-              location: item.localisation,
+              id: item?.id?.toString() || "",
+              ownerId: item?.proprietaire?.id?.toString() || "",
+              name: item?.nom_equipement || "",
+              category: (item?.categorie || "Earthmoving"),
+              pricePerDay: item?.prix_location || 0,
+              location: item?.localisation || "",
               availability: true,
               image: imageUrl,
-              description: item.description,
+              description: item?.description || "",
               specs: {},
-              status: (item.status === 'active' || item.status === 'pending' || item.status === 'rejected' ? item.status : "pending") as any,
-              poids_operationnel: item.poids_operationnel,
-              capacite_godet: item.capacite_godet
+              status: (item?.status === 'active' || item?.status === 'pending' || item?.status === 'rejected' ? item?.status : "pending") as any,
+              poids_operationnel: item?.poids_operationnel,
+              capacite_godet: item?.capacite_godet
             };
-          });
+          }) : [];
 
           // Apply active filter and availability filter
-          const activeOnly = transformed.filter((item: any) => item.status === "active");
+          const activeOnly = transformed.filter((item: any) => item?.status === "active");
           const finalData = activeOnly.filter((item: any) => {
-            const isRented = (reservations || []).some((r: any) => r.equipmentId === item.id && r.status === "In Progress");
+            const isRented = Array.isArray(reservations) && reservations.some((r: any) => r?.equipmentId === item?.id && r?.status === "In Progress");
             return !debouncedOnlyAvailable || !isRented;
           });
 
@@ -189,12 +193,12 @@ export default function ListingPage() {
   }, [debouncedSearchQuery, debouncedCity, debouncedCategory, debouncedMaxPrice, debouncedMaxPower, debouncedMaxCapacity, debouncedOnlyAvailable, reservations]);
 
   const getCategoryCount = (key: string) => {
-    if (!equipment) return 0;
-    const items = equipment.filter((e: any) => e.status === "active");
+    if (!equipment || !Array.isArray(equipment)) return 0;
+    const items = equipment.filter((e: any) => e?.status === "active");
     const counts = items.filter((item: any) => {
-      const isRented = (reservations || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
+      const isRented = Array.isArray(reservations) && reservations.some(r => r?.equipmentId === item?.id && r?.status === "In Progress");
       if (key === "Tous") return !isRented;
-      return !isRented && (item.category || "").toLowerCase() === key.toLowerCase();
+      return !isRented && (item?.category || "").toLowerCase() === key.toLowerCase();
     });
     return counts.length;
   };
@@ -232,7 +236,7 @@ export default function ListingPage() {
           Catégories
         </h3>
         <div className="flex flex-wrap gap-2">
-          {dynamicSidebarCategories.map(cat => {
+          {Array.isArray(dynamicSidebarCategories) ? dynamicSidebarCategories.map(cat => {
             const isActive = activeCategory === cat.key;
             return (
               <button 
@@ -252,7 +256,7 @@ export default function ListingPage() {
                 </span>
               </button>
             );
-          })}
+          }) : null}
         </div>
       </div>
 
@@ -375,7 +379,7 @@ export default function ListingPage() {
                 {activeCategory === "Tous" ? "Tous les matériels" : activeCategory}
               </h1>
               <span className="text-[10px] font-bold text-gray-400">
-                {filteredEquipment.length} équipement{filteredEquipment.length > 1 ? 's' : ''}
+                {(filteredEquipment && Array.isArray(filteredEquipment)) ? filteredEquipment.length : 0} équipement{((filteredEquipment && Array.isArray(filteredEquipment)) ? filteredEquipment.length : 0) > 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -524,7 +528,7 @@ export default function ListingPage() {
           </button>
         </div>
         <div className="flex overflow-x-auto gap-4 snap-x pb-2 scrollbar-none" style={{ scrollbarWidth: "none" }}>
-          {categoriesList.map((cat, i) => (
+          {Array.isArray(categoriesList) ? categoriesList.map((cat, i) => (
             <button 
               key={i}
               onClick={() => {
@@ -538,17 +542,19 @@ export default function ListingPage() {
               }`}
             >
               <div className="w-12 h-10 relative mb-2 flex items-center justify-center">
-                <Image 
-                  src={cat.img} 
-                  alt={cat.name} 
-                  fill 
-                  className="object-contain" 
-                />
+                {cat?.img ? (
+                  <Image 
+                    src={cat.img} 
+                    alt={cat?.name || "Catégorie"} 
+                    fill 
+                    className="object-contain" 
+                  />
+                ) : null}
               </div>
               <span className="text-[10px] font-black text-gray-900 leading-tight text-center truncate w-full">{cat.name}</span>
               <span className="text-[8px] font-bold text-gray-400 mt-0.5">{cat.count} équipement{cat.count > 1 ? 's' : ''}</span>
             </button>
-          ))}
+          )) : null}
         </div>
       </div>
 
@@ -573,14 +579,26 @@ export default function ListingPage() {
             ) : null}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 xl:gap-8">
-              {filteredEquipment.map((item: any) => {
-                const isCurrentlyRented = (reservations || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
-                return <EquipmentResultCard key={item.id} item={item} isRented={isCurrentlyRented} />;
-              })}
+              {filteredEquipment && Array.isArray(filteredEquipment) && filteredEquipment.length > 0 ? (
+                filteredEquipment.map((item: any) => {
+                  const isCurrentlyRented = Array.isArray(reservations) && reservations.some(r => r?.equipmentId === item?.id && r?.status === "In Progress");
+                  return <EquipmentResultCard key={item?.id || `fallback-${Math.random()}`} item={item} isRented={isCurrentlyRented} />;
+                })
+              ) : (
+                (!filteredEquipment || !Array.isArray(filteredEquipment) || filteredEquipment.length === 0) && isLoading ? (
+                  <div className="col-span-full flex items-center justify-center py-12 text-slate-500">
+                    Chargement des équipements...
+                  </div>
+                ) : (
+                  <div className="col-span-full flex items-center justify-center py-12 text-gray-500">
+                    Chargement ou aucun équipement trouvé...
+                  </div>
+                )
+              )}
             </div>
 
             {/* Modern Mobile Pagination */}
-            {filteredEquipment.length > 0 && (
+            {filteredEquipment && Array.isArray(filteredEquipment) && filteredEquipment.length > 0 && (
               <div className="flex items-center justify-center gap-2.5 mt-12">
                 <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#f7941d] text-zinc-950 font-black text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer">
                   1
@@ -603,7 +621,7 @@ export default function ListingPage() {
               </div>
             )}
 
-            {filteredEquipment.length === 0 && !isLoading && (
+            {(!filteredEquipment || !Array.isArray(filteredEquipment) || filteredEquipment.length === 0) && !isLoading && (
               <div className="py-24 bg-white rounded-3xl border border-slate-200/50 flex flex-col items-center justify-center text-center p-8 shadow-sm">
                 <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 mb-6">
                   <Search size={28} />
@@ -700,7 +718,7 @@ export default function ListingPage() {
             <div className="flex flex-col gap-3">
               <div className="relative w-12 h-12 flex items-center justify-center mb-2">
                 <div className="absolute -left-2 -bottom-2 w-10 h-10 bg-orange-500/10 rounded-full"></div>
-                <CreditCard size={28} strokeWidth={1.5} className="relative z-10 text-slate-900" />
+                <CreditCard size={28} strokeWidth={1.5} className="relative z-10 text-slate-950" />
               </div>
               <h4 className="text-sm font-black text-slate-900">Paiement protégé</h4>
               <p className="text-xs font-semibold text-slate-400 leading-relaxed">
@@ -711,7 +729,7 @@ export default function ListingPage() {
             <div className="flex flex-col gap-3">
               <div className="relative w-12 h-12 flex items-center justify-center mb-2">
                 <div className="absolute -left-2 -bottom-2 w-10 h-10 bg-orange-500/10 rounded-full"></div>
-                <Headset size={28} strokeWidth={1.5} className="relative z-10 text-slate-900" />
+                <Headset size={28} strokeWidth={1.5} className="relative z-10 text-slate-950" />
               </div>
               <h4 className="text-sm font-black text-slate-900">Support de chantier</h4>
               <p className="text-xs font-semibold text-slate-400 leading-relaxed">
@@ -727,6 +745,7 @@ export default function ListingPage() {
       <div className="w-[95%] lg:w-[90%] max-w-[1600px] mx-auto mt-12 mb-12 relative z-10">
         <div className="relative rounded-[24px] lg:rounded-[32px] overflow-hidden bg-zinc-950 flex flex-col justify-center min-h-[280px] border border-zinc-900">
           <div className="absolute inset-0 w-full h-full">
+            {/* Background image visual */}
             <Image 
               src="/last.png" 
               alt="Construction Equipment Background" 
@@ -766,20 +785,22 @@ export default function ListingPage() {
 }
 
 function EquipmentResultCard({ item, isRented }: { item: any; isRented: boolean }) {
-  const isAvailable = item.status === "active" && !isRented;
+  const isAvailable = item?.status === "active" && !isRented;
   
   return (
     <div className="group relative bg-white rounded-2xl border border-gray-100 transition-all p-3 md:p-0 md:rounded-[20px] md:overflow-hidden md:border-slate-200/50 md:shadow-[0_4px_20px_-10px_rgba(0,0,0,0.03)] md:hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] flex flex-row md:flex-col h-auto md:h-full gap-4 md:gap-0">
       
       {/* Left Section (Image): place transparent machinery image in constrained wrapper */}
       <div className="w-32 h-24 relative flex-shrink-0 md:w-full md:h-auto md:aspect-[4/3] md:flex-shrink overflow-hidden rounded-xl md:rounded-none bg-slate-50 flex items-center justify-center">
-        <Link href={`/equipment/${item.id}`} className="w-full h-full relative block">
-          <Image 
-            src={item.image || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800"} 
-            alt={item.name} 
-            fill
-            className={`object-contain md:object-cover transition-transform duration-700 group-hover:scale-105 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
-          />
+        <Link href={`/equipment/${item?.id || ""}`} className="w-full h-full relative block">
+          {item?.image ? (
+            <Image 
+              src={item.image} 
+              alt={item?.name || "Equipment"} 
+              fill
+              className={`object-contain md:object-cover transition-transform duration-700 group-hover:scale-105 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
+            />
+          ) : null}
         </Link>
         {/* Availability Badge on Desktop */}
         <div className={`hidden md:block absolute bottom-3 left-3 px-3 py-1 rounded-full text-[9px] font-black tracking-wide uppercase shadow-sm ${
@@ -806,12 +827,12 @@ function EquipmentResultCard({ item, isRented }: { item: any; isRented: boolean 
         <div className="flex flex-col gap-1">
           {/* Equipment Title */}
           <h3 className="text-xs md:text-sm font-black tracking-tight leading-snug text-slate-900 group-hover:text-[#f7941d] transition-colors line-clamp-1 pr-6 md:pr-0">
-            {item.name}
+            {item?.name || "Équipement"}
           </h3>
 
           {/* Subtitle / Category */}
           <span className="text-[9px] text-gray-400 font-bold block md:hidden">
-            {item.category}
+            {item?.category || "Matériel"}
           </span>
 
           {/* Availability Soft Badge on Mobile */}
@@ -831,7 +852,7 @@ function EquipmentResultCard({ item, isRented }: { item: any; isRented: boolean 
               <svg className="w-2.5 h-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
               </svg>
-              {item.poids_operationnel || 22.5} t
+              {item?.poids_operationnel || 22.5} t
             </span>
             <span className="bg-slate-50 border border-slate-100/70 text-slate-500 text-[9px] font-black uppercase tracking-tight px-2 py-0.5 rounded-md flex items-center gap-1">
               <svg className="w-2.5 h-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -845,10 +866,10 @@ function EquipmentResultCard({ item, isRented }: { item: any; isRented: boolean 
         {/* Pricing Info */}
         <div className="flex justify-between items-baseline md:items-end mt-2 md:mt-4 pt-1 md:pt-4 md:border-t md:border-slate-100">
           <div className="flex items-baseline gap-1">
-            <span className="text-slate-900 text-sm md:text-2xl font-black">{item.pricePerDay}</span>
+            <span className="text-slate-900 text-sm md:text-2xl font-black">{item?.pricePerDay || 0}</span>
             <span className="text-[9px] md:text-[11px] font-bold text-slate-400 uppercase tracking-tight">DH / jour</span>
           </div>
-          <Link href={`/equipment/${item.id}`} className="hidden md:block">
+          <Link href={`/equipment/${item?.id || ""}`} className="hidden md:block">
             <button className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:border-[#f7941d] hover:bg-[#f7941d] hover:text-zinc-950 transition-all cursor-pointer active:scale-95">
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
