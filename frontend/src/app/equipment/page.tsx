@@ -588,67 +588,69 @@ export default function ListingPage() {
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 xl:gap-8">
-              {filteredEquipment && Array.isArray(filteredEquipment) && filteredEquipment.length > 0 ? (
-                filteredEquipment.map((item: any) => {
-                  const isCurrentlyRented = Array.isArray(reservations) && reservations.some(r => r?.equipmentId === item?.id && r?.status === "In Progress");
-                  return <EquipmentCard key={item?.id || `fallback-${Math.random()}`} item={item} isRented={isCurrentlyRented} />;
+            <div className="flex flex-col gap-12">
+              {categories && Array.isArray(categories) && categories.length > 0 ? (
+                categories.map((cat) => {
+                  if (!cat || !cat.name) return null;
+
+                  // Filter flat material records using the real column structure text mapping
+                  const associatedItems = filteredEquipment && Array.isArray(filteredEquipment)
+                    ? filteredEquipment.filter((item: any) => item && String(item.categorie || item.category || "").toLowerCase() === String(cat.name).toLowerCase())
+                    : [];
+
+                  // If activeCategory is not "Tous" and matches this category, or activeCategory is "Tous"
+                  const isCategoryMatching = activeCategory === "Tous" || activeCategory === cat.name;
+
+                  if (!isCategoryMatching || associatedItems.length === 0) return null;
+
+                  return (
+                    <div key={cat.id} className="mb-8">
+                      <h3 className="text-lg font-black text-gray-900 border-b border-gray-100 pb-3 mb-6 flex items-center gap-3">
+                        <span className="w-1.5 h-6 rounded-full bg-[#f7941d]"></span>
+                        {cat.name}
+                        <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">
+                          {associatedItems.length}
+                        </span>
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 xl:gap-8">
+                        {associatedItems.map((item: any) => {
+                          const isCurrentlyRented = Array.isArray(reservations) && reservations.some(r => r?.equipmentId === item?.id && r?.status === "In Progress");
+                          return (
+                            <EquipmentCard 
+                              key={item?.id || `item-${Math.random()}`} 
+                              item={item} 
+                              isRented={isCurrentlyRented} 
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
                 })
               ) : (
-                (!filteredEquipment || !Array.isArray(filteredEquipment) || filteredEquipment.length === 0) && isLoading ? (
-                  <div className="col-span-full flex items-center justify-center py-12 text-slate-500">
-                    Chargement des équipements...
+                <div className="py-12 text-center text-gray-500">Chargement des équipements...</div>
+              )}
+
+              {(!filteredEquipment || !Array.isArray(filteredEquipment) || filteredEquipment.length === 0) && !isLoading && (
+                <div className="py-24 bg-white rounded-3xl border border-slate-200/50 flex flex-col items-center justify-center text-center p-8 shadow-sm">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 mb-6">
+                    <Search size={28} />
                   </div>
-                ) : (
-                  <div className="col-span-full flex items-center justify-center py-12 text-gray-500">
-                    Chargement ou aucun équipement trouvé...
-                  </div>
-                )
+                  <h3 className="text-xl font-black text-slate-900">Aucun résultat</h3>
+                  <p className="text-slate-400 text-xs font-medium max-w-sm mt-2 leading-relaxed">
+                    Nous n&apos;avons trouvé aucun équipement correspondant à vos critères de recherche. Essayez d&apos;élargir vos filtres.
+                  </p>
+                  <Button 
+                    variant="secondary" 
+                    className="mt-8 px-6" 
+                    onClick={handleResetFilters}
+                  >
+                    Réinitialiser les filtres
+                  </Button>
+                </div>
               )}
             </div>
-
-            {/* Modern Mobile Pagination */}
-            {filteredEquipment && Array.isArray(filteredEquipment) && filteredEquipment.length > 0 && (
-              <div className="flex items-center justify-center gap-2.5 mt-12">
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#f7941d] text-zinc-950 font-black text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer">
-                  1
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-slate-700 hover:border-gray-300 font-bold text-xs transition-all cursor-pointer">
-                  2
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-slate-700 hover:border-gray-300 font-bold text-xs transition-all cursor-pointer">
-                  3
-                </button>
-                <span className="text-gray-400 font-bold text-xs px-1">...</span>
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-slate-700 hover:border-gray-300 font-bold text-xs transition-all cursor-pointer">
-                  5
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 text-slate-700 hover:border-gray-300 font-bold text-xs transition-all cursor-pointer active:scale-95">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                  </svg>
-                </button>
-              </div>
-            )}
-
-            {(!filteredEquipment || !Array.isArray(filteredEquipment) || filteredEquipment.length === 0) && !isLoading && (
-              <div className="py-24 bg-white rounded-3xl border border-slate-200/50 flex flex-col items-center justify-center text-center p-8 shadow-sm">
-                <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 mb-6">
-                  <Search size={28} />
-                </div>
-                <h3 className="text-xl font-black text-slate-900">Aucun résultat</h3>
-                <p className="text-slate-400 text-xs font-medium max-w-sm mt-2 leading-relaxed">
-                  Nous n&apos;avons trouvé aucun équipement correspondant à vos critères de recherche. Essayez d&apos;élargir vos filtres.
-                </p>
-                <Button 
-                  variant="secondary" 
-                  className="mt-8 px-6" 
-                  onClick={handleResetFilters}
-                >
-                  Réinitialiser les filtres
-                </Button>
-              </div>
-            )}
           </main>
         </div>
       </div>
