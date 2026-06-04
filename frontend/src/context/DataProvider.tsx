@@ -110,13 +110,17 @@ const mapStatus = (status: string): ReservationStatus => {
 
 const transformEquipment = (item: any): Equipment => {
   const rawImage = (item.images || item.image || "") as string;
-  const isValidImage = rawImage && 
-                      rawImage !== "null" && 
-                      rawImage !== "undefined" && 
-                      rawImage.length > 10;
+  const secureImage = rawImage.startsWith('http://api.aandilik.com')
+    ? rawImage.replace('http://api.aandilik.com', 'https://api.aandilik.com')
+    : rawImage;
+
+  const isValidImage = secureImage && 
+                      secureImage !== "null" && 
+                      secureImage !== "undefined" && 
+                      secureImage.length > 10;
 
   const imageUrl = isValidImage 
-    ? rawImage 
+    ? secureImage 
     : "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800";
 
   return {

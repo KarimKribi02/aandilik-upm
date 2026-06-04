@@ -144,12 +144,16 @@ export default function ListingPage() {
         if (active) {
           const transformed = Array.isArray(rawData) ? rawData.map((item: any) => {
             const rawImage = (item?.images || item?.image || "") as string;
-            const isValidImage = rawImage && 
-                                rawImage !== "null" && 
-                                rawImage !== "undefined" && 
-                                rawImage.length > 10;
+            const secureImage = rawImage.startsWith('http://api.aandilik.com')
+              ? rawImage.replace('http://api.aandilik.com', 'https://api.aandilik.com')
+              : rawImage;
+
+            const isValidImage = secureImage && 
+                                secureImage !== "null" && 
+                                secureImage !== "undefined" && 
+                                secureImage.length > 10;
             const imageUrl = isValidImage 
-              ? rawImage 
+              ? secureImage 
               : "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800";
 
             return {
@@ -787,18 +791,32 @@ export default function ListingPage() {
 function EquipmentResultCard({ item, isRented }: { item: any; isRented: boolean }) {
   const isAvailable = item?.status === "active" && !isRented;
   
+  const rawUrl = item?.image || '';
+  const secureImageUrl = rawUrl.startsWith('http://api.aandilik.com')
+    ? rawUrl.replace('http://api.aandilik.com', 'https://api.aandilik.com')
+    : rawUrl;
+
+  const [imgSrc, setImgSrc] = useState(secureImageUrl || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800");
+
+  useEffect(() => {
+    setImgSrc(secureImageUrl || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800");
+  }, [secureImageUrl]);
+
   return (
     <div className="group relative bg-white rounded-2xl border border-gray-100 transition-all p-3 md:p-0 md:rounded-[20px] md:overflow-hidden md:border-slate-200/50 md:shadow-[0_4px_20px_-10px_rgba(0,0,0,0.03)] md:hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] flex flex-row md:flex-col h-auto md:h-full gap-4 md:gap-0">
       
       {/* Left Section (Image): place transparent machinery image in constrained wrapper */}
       <div className="w-32 h-24 relative flex-shrink-0 md:w-full md:h-auto md:aspect-[4/3] md:flex-shrink overflow-hidden rounded-xl md:rounded-none bg-slate-50 flex items-center justify-center">
         <Link href={`/equipment/${item?.id || ""}`} className="w-full h-full relative block">
-          {item?.image ? (
+          {imgSrc ? (
             <Image 
-              src={item.image} 
+              src={imgSrc} 
               alt={item?.name || "Equipment"} 
               fill
               className={`object-contain md:object-cover transition-transform duration-700 group-hover:scale-105 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
+              onError={() => {
+                setImgSrc('/placeholder-machinery.png');
+              }}
             />
           ) : null}
         </Link>

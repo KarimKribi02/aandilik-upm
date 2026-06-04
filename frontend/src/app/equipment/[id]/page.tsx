@@ -46,6 +46,19 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
   const [trackingCode, setTrackingCode] = useState("");
   const [copied, setCopied] = useState(false);
 
+  const rawUrl = equipment?.images || '';
+  const secureImageUrl = rawUrl.startsWith('http://api.aandilik.com')
+    ? rawUrl.replace('http://api.aandilik.com', 'https://api.aandilik.com')
+    : rawUrl;
+
+  const [imgSrc, setImgSrc] = useState("https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800");
+
+  useEffect(() => {
+    if (secureImageUrl) {
+      setImgSrc(secureImageUrl);
+    }
+  }, [secureImageUrl]);
+
   // Guest inputs
   const [clientNom, setClientNom] = useState("");
   const [clientTelephone, setClientTelephone] = useState("");
@@ -247,9 +260,12 @@ export default function DetailsPage({ params }: { params: Promise<{ id: string }
               className="relative aspect-video rounded-3xl overflow-hidden shadow-md bg-slate-950 p-1 border border-slate-200/50"
             >
               <img
-                src={equipment.images || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800"}
+                src={imgSrc}
                 alt={equipment.nom_equipement}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                onError={() => {
+                  setImgSrc('/placeholder-machinery.png');
+                }}
               />
               <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10" />
             </motion.div>

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, GlassContainer } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { PublishDemandModal } from "@/components/ui/PublishDemandModal";
 import { Input } from "@/components/ui/FormElements";
 import { useData } from "@/context/DataProvider";
+import { apiFetch } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
 import { 
   Search, 
@@ -36,6 +37,23 @@ export default function Home() {
   const latestArticles = articles.length > 0 
     ? [...articles].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 3)
     : [];
+
+  const [experts, setExperts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchExpertsData = async () => {
+      try {
+        const data = await apiFetch("/experts");
+        if (data && Array.isArray(data)) {
+          setExperts(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch experts on homepage:", err);
+      }
+    };
+    fetchExpertsData();
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState("Toutes catégories");
   const [location, setLocation] = useState("");
@@ -468,23 +486,32 @@ export default function Home() {
         <div className="container mx-auto px-6 max-w-[1440px]">
           <div className="flex flex-col gap-12 mb-16 px-4">
             <div className="flex flex-col gap-4">
-              <span className="text-[#f59e0b] font-black uppercase tracking-[0.3em] text-[10px]">Guides Stratégiques</span>
+              <span className="text-[#f7941d] font-black uppercase tracking-[0.3em] text-[10px]">GUIDES STRATÉGIQUES</span>
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
-                Conseils d&apos;experts <br /> par secteur d&apos;activité
+                Conseils d&apos;experts par secteur d&apos;activité
               </h2>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 px-4">
-            {[
-              { name: "Bâtiment & résidentiel", img: "https://images.pexels.com/photos/159306/construction-site-build-construction-work-159306.jpeg?auto=compress&cs=tinysrgb&w=800" },
-              { name: "Travaux publics", img: "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800" },
-              { name: "Carrières & mines", img: "https://images.pexels.com/photos/2209529/pexels-photo-2209529.jpeg?auto=compress&cs=tinysrgb&w=800" },
-              { name: "Industrie", img: "https://images.pexels.com/photos/247763/pexels-photo-247763.jpeg?auto=compress&cs=tinysrgb&w=800" },
-              { name: "Infrastructures", img: "https://images.unsplash.com/photo-1590487988256-adb768a48773?auto=compress&cs=tinysrgb&w=800" },
-            ].map((sector, i) => (
-              <SectorCard key={i} item={sector} index={i} />
-            ))}
+          <div className="flex overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 flex-nowrap md:flex-wrap scrollbar-none pb-6 md:pb-0" style={{ scrollbarWidth: "none" }}>
+            {Array.isArray(experts) && experts.length > 0 ? (
+              experts.map((sector, i) => (
+                <div key={sector.id || i} className="min-w-[280px] md:min-w-0 flex-shrink-0 md:flex-shrink w-full md:w-auto">
+                  <SectorCard item={sector} index={i} />
+                </div>
+              ))
+            ) : (
+              [
+                { name: "Bâtiment & résidentiel", img: "https://images.pexels.com/photos/159306/construction-site-build-construction-work-159306.jpeg?auto=compress&cs=tinysrgb&w=800" },
+                { name: "Travaux publics", img: "https://images.pexels.com/photos/1078850/pexels-photo-1078850.jpeg?auto=compress&cs=tinysrgb&w=800" },
+                { name: "Carrières & mines", img: "https://images.pexels.com/photos/2209529/pexels-photo-2209529.jpeg?auto=compress&cs=tinysrgb&w=800" },
+                { name: "Industrie", img: "https://images.pexels.com/photos/247763/pexels-photo-247763.jpeg?auto=compress&cs=tinysrgb&w=800" },
+              ].map((sector, i) => (
+                <div key={i} className="min-w-[280px] md:min-w-0 flex-shrink-0 md:flex-shrink w-full md:w-auto">
+                  <SectorCard item={sector} index={i} />
+                </div>
+              ))
+            )}
           </div>
 
           <div className="flex justify-center mt-20">
@@ -677,6 +704,17 @@ function EquipmentCard({ item, index }: { item: any; index: number }) {
   const { reservations: res } = useData();
   const isRented = (res || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
 
+  const rawUrl = item?.image || '';
+  const secureImageUrl = rawUrl.startsWith('http://api.aandilik.com')
+    ? rawUrl.replace('http://api.aandilik.com', 'https://api.aandilik.com')
+    : rawUrl;
+
+  const [imgSrc, setImgSrc] = useState(secureImageUrl || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800");
+
+  useEffect(() => {
+    setImgSrc(secureImageUrl || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800");
+  }, [secureImageUrl]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -692,10 +730,13 @@ function EquipmentCard({ item, index }: { item: any; index: number }) {
         )}
         <Link href={`/equipment/${item.id}`} className="relative aspect-[16/11] overflow-hidden m-4 rounded-[2.5rem]">
           <Image 
-            src={item.image} 
+            src={imgSrc} 
             alt={item.name} 
             fill
             className={`object-cover transition-transform duration-1000 group-hover:scale-110 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
+            onError={() => {
+              setImgSrc('/placeholder-machinery.png');
+            }}
           />
           <div className="absolute top-6 left-6 glass-light px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] backdrop-blur-md">{item.category}</div>
           <div className="absolute bottom-6 right-6 w-14 h-14 bg-white/90 backdrop-blur-md rounded-3xl flex items-center justify-center text-secondary hover:text-primary hover:scale-110 transition-all duration-500 cursor-pointer shadow-xl opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0">
@@ -749,6 +790,17 @@ function FeaturedMachineCard({ item, index }: { item: any; index: number }) {
   const { reservations: res } = useData();
   const isRented = (res || []).some(r => r.equipmentId === item.id && r.status === "In Progress");
 
+  const rawUrl = item?.image || '';
+  const secureImageUrl = rawUrl.startsWith('http://api.aandilik.com')
+    ? rawUrl.replace('http://api.aandilik.com', 'https://api.aandilik.com')
+    : rawUrl;
+
+  const [imgSrc, setImgSrc] = useState(secureImageUrl || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800");
+
+  useEffect(() => {
+    setImgSrc(secureImageUrl || "https://images.unsplash.com/photo-1579684389782-64d84b5e905d?auto=compress&cs=tinysrgb&w=800");
+  }, [secureImageUrl]);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -758,10 +810,13 @@ function FeaturedMachineCard({ item, index }: { item: any; index: number }) {
     >
       <Link href={`/equipment/${item.id}`} className="group relative block h-[380px] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
         <Image 
-          src={item.image} 
+          src={imgSrc} 
           alt={item.name} 
           fill
           className={`object-cover transition-transform duration-700 group-hover:scale-105 ${isRented ? 'grayscale-[0.5] opacity-80' : ''}`}
+          onError={() => {
+            setImgSrc('/placeholder-machinery.png');
+          }}
         />
         
         {/* Dark Gradient Overlay */}
@@ -792,20 +847,34 @@ function FeaturedMachineCard({ item, index }: { item: any; index: number }) {
 }
 
 function SectorCard({ item, index }: { item: any; index: number }) {
+  const rawUrl = item?.image || item?.img || '';
+  const secureImageUrl = rawUrl.startsWith('http://api.aandilik.com')
+    ? rawUrl.replace('http://api.aandilik.com', 'https://api.aandilik.com')
+    : rawUrl;
+
+  const [imgSrc, setImgSrc] = useState(secureImageUrl || "/placeholder-expert.png");
+
+  useEffect(() => {
+    setImgSrc(secureImageUrl || "/placeholder-expert.png");
+  }, [secureImageUrl]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       viewport={{ once: true }}
-      className="group relative cursor-pointer h-[320px] md:h-[400px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500"
+      className="group relative cursor-pointer h-[320px] md:h-[400px] rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 w-full"
     >
-      <Link href={`/blog?category=${encodeURIComponent(item.name)}`} className="absolute inset-0 z-20" />
+      <Link href={`/blog?category=${encodeURIComponent(item.role || item.name || "")}`} className="absolute inset-0 z-20" />
       <Image 
-        src={item.img} 
-        alt={item.name} 
+        src={imgSrc} 
+        alt={item.role || item.name || "Expert"} 
         fill
         className="object-cover transition-transform duration-[1500ms] group-hover:scale-110"
+        onError={() => {
+          setImgSrc('/placeholder-expert.png');
+        }}
       />
       
       {/* Dynamic Overlay */}
@@ -814,9 +883,9 @@ function SectorCard({ item, index }: { item: any; index: number }) {
       {/* Content */}
       <div className="absolute inset-0 p-8 flex flex-col justify-end gap-4">
         <div className="flex flex-col gap-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-          <span className="text-[#f59e0b] font-black uppercase tracking-[0.2em] text-[9px]">Conseil Expert</span>
+          <span className="text-[#f59e0b] font-black uppercase tracking-[0.2em] text-[9px]">CONSEIL EXPERT</span>
           <h3 className="text-xl font-black text-white tracking-tight leading-tight">
-            {item.name}
+            {item.role || item.name || "Expert"}
           </h3>
           <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center gap-2 text-white/70 text-[10px] font-bold uppercase tracking-widest mt-2">
             Lire le guide <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
